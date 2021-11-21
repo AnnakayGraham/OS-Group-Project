@@ -75,33 +75,41 @@ algo_values = [
 def add():
     # add process info to the table
     global count
+    # prevent entering if required entries are blank
+    if len(ent_name.get()) != 0 and  len(ent_arrival.get()) != 0 and len(ent_burst.get()) != 0: 
+    #if an algorithm is not selected, then do not add anything
+        if selected_algo != -1:
+            if(count < proc_max+1):
+                table.insert(parent='', index='end', iid=count, text='', values=(
+                    ent_name.get(), ent_arrival.get(), ent_burst.get(), ent_priority.get()))
+                count += 1
 
-    # TO DO prevent entering if required entries are blank
-    # TO DO if an algorithm is not selected, then do not add anything
-    if(count < proc_max+1):
-        table.insert(parent='', index='end', iid=count, text='', values=(
-            ent_name.get(), ent_arrival.get(), ent_burst.get(), ent_priority.get()))
-        count += 1
+                if(selected_algo == algos[0]):
+                    # add data for shortest job next
+                    fin_time = int(ent_arrival.get()) + int(ent_burst.get())
+                    data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
+                                "burst": int(ent_burst.get())})
+                    # print(data)
 
-        if(selected_algo == algos[0]):
-            # add data for shortest job next
-            fin_time = int(ent_arrival.get()) + int(ent_burst.get())
-            data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
-                        "burst": int(ent_burst.get())})
-            # print(data)
-
-        ent_name.delete(0, tk.END)
-        ent_arrival.delete(0, tk.END)
-        ent_burst.delete(0, tk.END)
-        ent_priority.delete(0, tk.END)
+                ent_name.delete(0, tk.END)
+                ent_arrival.delete(0, tk.END)
+                ent_burst.delete(0, tk.END)
+                ent_priority.delete(0, tk.END)
 
 
 def remove():
     # remove selected process from table and from stored data
+    
     selected = table.focus()
-    table.delete(selected)
-    # TO DO remove value from data list
-    # TO prevent trying to remove when nothing is slected in table
+    # prevent trying to remove when nothing is slected in table
+    if selected:
+        # remove value from data list
+        del data[int(selected)]
+        table.delete(selected)
+    
+
+
+    
 
 
 def run():
