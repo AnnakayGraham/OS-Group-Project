@@ -150,11 +150,70 @@ def animate(y_points, y_labels, animation):
         canvas.flush_events()
 
 
+def forget(widget):
+  widget.grid_forget()
+# shows relevant entry
+
+
 def select_SJN_algo():
     global selected_algo
 
-    selected_algo = algos[0]
-    ent_priority['bg'] = "black"
+    selected_algo = "SJN"
+    forget(ent_priority)
+    forget(ent_time)
+    forget(lbl_priority)
+    forget(lbl_time)
+    displaycolumns=[]
+    for col in table["columns"]:
+      if col != "priority":
+        displaycolumns.append(col)
+    table["displaycolumn"]=displaycolumns
+    
+   
+
+def select_RR_algo():
+    global selected_algo
+
+
+    selected_algo = "RR"
+    forget(ent_priority)
+    forget(lbl_priority)
+    lbl_time.grid(row=0, column=4)
+    ent_time.grid(row=1, column=4)
+    displaycolumns=[]
+    for col in table["columns"]:
+      if col != "priority":
+        displaycolumns.append(col)
+    table["displaycolumn"]=displaycolumns
+    
+    
+    
+
+def select_priority_algo():
+    global selected_algo
+    selected_algo = "P"
+    ent_priority.grid(row=1, column=3)
+    lbl_priority.grid(row=0, column=3)
+    forget(lbl_time)
+    forget(ent_time)
+    displaycolumns=[]
+    for col in table["columns"]:
+      displaycolumns.append(col)
+    table["displaycolumn"]=displaycolumns
+
+def select_FcFs_algo():
+  global selected_algo
+
+  selected_algo = "FCFS"
+  forget(ent_priority)
+  forget(ent_time)
+  forget(lbl_priority)
+  forget(lbl_time)
+  displaycolumns=[]
+  for col in table["columns"]:
+    if col != "priority":
+      displaycolumns.append(col)
+  table["displaycolumn"]=displaycolumnsk"
 
 
 def advance_time():
@@ -320,7 +379,8 @@ btn_FCFS = tk.Button(
     width=25,
     height=2,
     bg="black",
-    fg="white"
+    fg="white",
+    command=select_FcFs_algo
 )
 btn_FCFS.grid(row=0, column=2)
 
@@ -330,7 +390,8 @@ btn_P = tk.Button(
     width=25,
     height=2,
     bg="black",
-    fg="white"
+    fg="white",
+    command=select_priority_algo
 )
 btn_P.grid(row=0, column=3)
 
@@ -340,7 +401,8 @@ btn_RR = tk.Button(
     width=25,
     height=2,
     bg="black",
-    fg="white"
+    fg="white",
+    command=select_RR_algo
 )
 btn_RR.grid(row=0, column=4)
 
