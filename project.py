@@ -71,7 +71,6 @@ algo_values = [
 # Code for the functions is below
 ######################################################
 
-
 def add():
     # add process info to the table
     global count
@@ -99,23 +98,21 @@ def add():
 
 def remove():
     # remove selected process from table and from stored data
-    
+
     selected = table.focus()
     # prevent trying to remove when nothing is slected in table
     if selected:
         # remove value from data list
         del data[int(selected)]
         table.delete(selected)
-    
-
-
-    
 
 
 def run():
-    if(selected_algo == algos[0]):
+    if(selected_algo == "SJN"):
         total_time()
         shortest_job_next()
+   
+    
 
 
 def animate(y_points, y_labels, animation):
@@ -149,7 +146,7 @@ def animate(y_points, y_labels, animation):
         canvas.draw()
         canvas.flush_events()
 
-
+# hide relevant entry
 def forget(widget):
   widget.grid_forget()
 # shows relevant entry
@@ -213,8 +210,8 @@ def select_FcFs_algo():
   for col in table["columns"]:
     if col != "priority":
       displaycolumns.append(col)
-  table["displaycolumn"]=displaycolumnsk"
-
+  table["displaycolumn"]=displaycolumns
+ 
 
 def advance_time():
     global time
@@ -333,13 +330,13 @@ def shortest_job_next():
         animation.append({"xranges": x_values[x], "yrange": y_ranges[x]})
 
     animate(y_points, y_labels, animation)
-
-
+def roundrobin():
+  return -1
 ######################################################
 # Code for the gui is below
 ######################################################
 window = tk.Tk()
-window.geometry('800x670')
+window.geometry('1000x1000')
 window['bg'] = '#000000'
 
 frm_banner = tk.Frame(master=window, height=100, bg="black")
@@ -349,7 +346,7 @@ lbl_title = tk.Label(
     foreground="yellow",
     background="black",
     height=3,
-    width=100
+    width=80
 
 
 )
@@ -381,6 +378,7 @@ btn_FCFS = tk.Button(
     bg="black",
     fg="white",
     command=select_FcFs_algo
+    
 )
 btn_FCFS.grid(row=0, column=2)
 
@@ -392,6 +390,8 @@ btn_P = tk.Button(
     bg="black",
     fg="white",
     command=select_priority_algo
+    
+    
 )
 btn_P.grid(row=0, column=3)
 
@@ -403,6 +403,7 @@ btn_RR = tk.Button(
     bg="black",
     fg="white",
     command=select_RR_algo
+  
 )
 btn_RR.grid(row=0, column=4)
 
@@ -413,14 +414,18 @@ frm_algos.grid(row=1, column=0, padx=30, pady=10,
 # table  for inputs
 table = ttk.Treeview(window, height=7)
 table.grid(row=2, column=0, pady=10)
+#Add some style
+
+
 
 table['columns'] = ('name', 'arrival', 'burst', 'priority')
 
+
 table.column("#0", width=0, stretch='no')
-table.column("name", anchor='center', width=90)
-table.column("arrival", anchor='center', width=90)
-table.column("burst", anchor='center', width=90)
-table.column("priority", anchor='center', width=90)
+table.column("name", anchor='center', width=150)
+table.column("arrival", anchor='center', width=100)#auto set
+table.column("burst", anchor='center', width=100)
+table.column("priority", anchor='center', width=100)
 
 table.heading("#0", text="", anchor='center')
 table.heading("name", text="Process name", anchor='center')
@@ -433,21 +438,24 @@ frm_input.grid(row=3, column=0, pady=10)
 
 # labels
 lbl_name = tk.Label(master=frm_input, text="Process name",
-                    fg="black", bg="white", width=13)
+                    fg="yellow", bg="black", width=13)
 lbl_name.grid(row=0, column=0)
 
 lbl_arrival = tk.Label(master=frm_input, text="Arrival time",
-                       fg="black", bg="white", width=13)
+                       fg="yellow", bg="black", width=13)
 lbl_arrival.grid(row=0, column=1)
 
 lbl_burst = tk.Label(master=frm_input, text="Burst time",
-                     fg="black", bg="white", width=13)
+                     fg="yellow", bg="black", width=13)
 lbl_burst.grid(row=0, column=2)
 
 lbl_priority = tk.Label(master=frm_input, text="Priority",
-                        fg="black", bg="white", width=13)
+                        fg="yellow", bg="black", width=13)
 lbl_priority.grid(row=0, column=3)
 
+lbl_time = tk.Label(master=frm_input, text="Time Slice",
+                        fg="yellow", bg="black", width=13)
+lbl_time.grid(row=0, column=4)
 # entry fields
 ent_name = tk.Entry(master=frm_input, fg="black", bg="white", width=10)
 ent_name.grid(row=1, column=0)
@@ -460,6 +468,10 @@ ent_burst.grid(row=1, column=2)
 
 ent_priority = tk.Entry(master=frm_input, fg="black", bg="white", width=10)
 ent_priority.grid(row=1, column=3)
+ent_time = tk.Entry(master=frm_input, fg="black", bg="white", width=10)
+ent_time.grid(row=1, column=4)
+
+
 
 
 # frame for control buttons
@@ -508,7 +520,7 @@ q.grid(row=2, column=1, pady=10)
 q['columns'] = ('process')
 
 q.column("#0", width=0, stretch='no')
-q.column("process", anchor='center', width=100)
+q.column("process", anchor='center', width=150)
 
 q.heading("#0", text="", anchor='center')
 q.heading("process", text="Process Queue", anchor='center')
@@ -544,6 +556,7 @@ canvas.get_tk_widget().grid(row=0, column=0)
 
 frm_timeline.grid(row=5, column=0, columnspan=2,
                   sticky=tk.W+tk.E, pady=10, padx=7)
+
 
 
 window.mainloop()
