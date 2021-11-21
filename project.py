@@ -330,7 +330,8 @@ btn_P = tk.Button(
     width=25,
     height=2,
     bg="black",
-    fg="white"
+    fg="white",
+    command=select_priority_algo
 )
 btn_P.grid(row=0, column=3)
 
@@ -340,7 +341,8 @@ btn_RR = tk.Button(
     width=25,
     height=2,
     bg="black",
-    fg="white"
+    fg="white",
+    command=select_RR_algo
 )
 btn_RR.grid(row=0, column=4)
 
