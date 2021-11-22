@@ -203,7 +203,7 @@ def shortest_job_next():
     x_values = []
     proc = []
 
-    # store process indices and burst times and arrival times
+    # store process indices and burst times
     for p in range(count):
         proc.append([p, data[p]['burst']])
 
