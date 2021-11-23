@@ -101,12 +101,13 @@ def add():
 
 def remove():
     # remove selected process from table and from stored data
-
+    global count
     selected = table.focus()
     # prevent trying to remove when nothing is slected in table
     if selected:
         # remove value from data list
         del data[int(selected)]
+        count -=1 
         table.delete(selected)
 
 
@@ -227,7 +228,17 @@ def advance_time():
     global q_lineup
 
     time += 1
-    # TO DO update system clock display
+
+    if time / 60 >= 1:
+        minute = str(round(time/60))
+        seconds = time % 60
+        clock_time = str(minute) + ":" + str(seconds)
+    else:
+        if time > 9:
+            clock_time = "0:" + str(time)
+        else:
+            clock_time = "0:0" + str(time)
+    lbl_clock.config(text=str(clock_time))
     # TO DO add arriving process name to queue display
     # TO DO add arriving process number to proc_queue
 
@@ -349,6 +360,8 @@ def roundrobin():
   animation=[]
   times=[]
   test=[]
+  #process queue based on arrival time 
+  process_queue = []
   global y_points
   y_points = y_points[:count]
   test=[]
@@ -357,7 +370,8 @@ def roundrobin():
   y_labels = []
   for p in range(count):
     y_labels.append(data[p]['name'])
-
+  for p in range(count):
+      process_queue.append((data[p]['arrival']))
   for i in range(count):
     burst.append(data[i]['burst'])
   newList= list(map(list,zip(y_labels,burst)))
@@ -367,6 +381,13 @@ def roundrobin():
     times.append((index[i[0]],i[1]))
   start=0
   end=0
+ 
+  #Bubble sort values based on arrival time
+  for i in range(len(process_queue)):
+    for x in range(len(process_queue)-1):
+        if process_queue[x+1][1] < process_queue[x][1]: 
+            process_queue[x],process_queue[x+1]  = process_queue[x+1],process_queue[x]
+
   for i in times:
     if i[1] >timeslice:
         newt= i[1]-timeslice
