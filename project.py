@@ -22,8 +22,8 @@ time_max = 0
 algos = ["SJN", "FCFS", "P", "RR"]
 selected_algo = -1
 data = []
-proc_queue = []         # process queue
-q_lineup = []           # process ids and their arrival times
+# process queue - list of lists representing the state of the q at each time
+proc_queue = []
 
 # y values where labels should appear on the chart
 y_points = [2, 6, 10, 14, 18, 22, 26]
@@ -76,8 +76,8 @@ def add():
     # add process info to the table
     global count
     # prevent entering if required entries are blank
-    if len(ent_name.get()) != 0 and  len(ent_arrival.get()) != 0 and len(ent_burst.get()) != 0: 
-    #if an algorithm is not selected, then do not add anything
+    if len(ent_name.get()) != 0 and len(ent_arrival.get()) != 0 and len(ent_burst.get()) != 0:
+        # if an algorithm is not selected, then do not add anything
         if selected_algo != -1:
             if(count < proc_max+1):
                 table.insert(parent='', index='end', iid=count, text='', values=(
@@ -99,17 +99,13 @@ def add():
 
 def remove():
     # remove selected process from table and from stored data
-    
+
     selected = table.focus()
     # prevent trying to remove when nothing is slected in table
     if selected:
         # remove value from data list
         del data[int(selected)]
         table.delete(selected)
-    
-
-
-    
 
 
 def run():
@@ -126,6 +122,7 @@ def animate(y_points, y_labels, animation):
     for i in range(time_max):
         # for each time unit
         advance_time()
+        # TO ADD update_queue_display(i)
 
         for p in range(count):
             # for each process
@@ -159,45 +156,36 @@ def select_SJN_algo():
 
 def advance_time():
     global time
-    global q_lineup
 
     time += 1
     # TO DO update system clock display
-    # TO DO add arriving process name to queue display
-    # TO DO add arriving process number to proc_queue
 
 
 def total_time():
+    # accumulates the duration times for all processes
     global time_max
-    # store largest arrival time
+
     t = 0
     for p in range(len(data)):
         t += data[p]['burst']
     time_max = t
 
 
-def add_to_queue(proc_name):
+def update_queue_display(time):
     global proc_queue
-    # TO DO add process names to bottom of queue display based on time
-    # TO DO add process number to proc_queue
-    pass
 
+    # clear the queue display table
+    for i in q.get_children():
+        q.delete(i)
 
-def update_queue():
-    global proc_queue
-    # TO DO reorder queue disply according to priority when  new process arrives
-    # TO DO remove finished processes based on their progress status from display as well as proc_queue
-    pass
+    # NOTE - proc_queue has the form [ [0,3], [3], ... ]
+    #   with one inner list for each time, having index number and processes to be displayed
+    for pos in range(len(proc_queue[time])):
+        process_index = proc_queue[time][pos]
+        process_name = data[process_index]['name']
 
-
-def is_queue_empty():
-    return len(proc_queue) == 0
-
-
-def calc_queue_lineup():
-    global q_lineup
-    # TO DO update q_lineup with sublists of arrival times and process numbers [ [0], [3,4] ]
-    pass
+        q.insert(parent='', index='end', iid=q_index,
+                 text='', values=(process_name))
 
 
 def shortest_job_next():
@@ -219,7 +207,7 @@ def shortest_job_next():
     for p in range(count):
         proc.append([p, data[p]['burst']])
 
-    # sort processes based on burst times using bubble sort
+    # sorting the processes according to burst times
     for i in range(0, len(proc)-1):
         for j in range(0, len(proc)-i-1):
             if proc[j][1] > proc[j+1][1]:
@@ -250,15 +238,15 @@ def shortest_job_next():
             if t <= new_times[x][1]:
                 # process has not arrived
                 p.append((0, 0))
+
             elif t == new_times[x][1]:
                 # process has arrived
-
                 p.append((t, steps))
                 steps += 1
+
             elif t > new_times[x][1]:
                 if t <= new_times[x][2]:
                     # process in progress
-
                     p.append((new_times[x][1], steps))
                     steps += 1
                 elif t > new_times[x][2]:
