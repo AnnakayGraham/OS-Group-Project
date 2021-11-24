@@ -370,8 +370,10 @@ def roundrobin():
   y_labels = []
   for p in range(count):
     y_labels.append(data[p]['name'])
+    #Populate process queue
   for p in range(count):
-      process_queue.append((data[p]['arrival']))
+      #Creates a tuple of process id and arrival time (process id, arrival time)
+      process_queue.append((p,data[p]['arrival']))
   for i in range(count):
     burst.append(data[i]['burst'])
   newList= list(map(list,zip(y_labels,burst)))
@@ -382,12 +384,11 @@ def roundrobin():
   start=0
   end=0
  
-  #Bubble sort values based on arrival time
+  #Bubble process queue based on arrival time 
   for i in range(len(process_queue)):
     for x in range(len(process_queue)-1):
         if process_queue[x+1][1] < process_queue[x][1]: 
             process_queue[x],process_queue[x+1]  = process_queue[x+1],process_queue[x]
-
   for i in times:
     if i[1] >timeslice:
         newt= i[1]-timeslice
