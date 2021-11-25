@@ -408,37 +408,25 @@ ent_priority.grid(row=1, column=3)
 
 
 # frame for control buttons
-frm_btns = tk.Frame()
+frm_btns = tk.Frame(master=window)
 
-btn_add = tk.Button(
+btn_add = ttk.Button(
     master=frm_btns,
     text="ADD",
-    width=10,
-    height=1,
-    bg="yellow",
-    fg="black",
     command=add
 )
 btn_add.grid(row=0, column=0, padx=5, pady=5)
 
-btn_remove = tk.Button(
+btn_remove = ttk.Button(
     master=frm_btns,
     text="REMOVE",
-    width=10,
-    height=1,
-    bg="yellow",
-    fg="black",
     command=remove
 )
 btn_remove.grid(row=0, column=1, padx=5, pady=5)
 
-btn_run = tk.Button(
+btn_run = ttk.Button(
     master=frm_btns,
     text="RUN",
-    width=10,
-    height=1,
-    bg="yellow",
-    fg="black",
     command=run
 )
 btn_run.grid(row=0, column=2, padx=5, pady=5)
@@ -493,6 +481,8 @@ frm_timeline.grid(row=5, column=0, columnspan=2,
 ####### STYLE #######
 style = ttk.Style()
 style.theme_use("clam")
+style.configure('TButton', background='yellow', foreground='black',
+                width=10, height=1, borderwidth=1, focusthickness=3, focuscolor='none')
 
 
 window.mainloop()
