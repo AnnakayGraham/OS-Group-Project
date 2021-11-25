@@ -246,7 +246,7 @@ def shortest_job_next():
             executing = short
             #proc[executing]['progress'] += 1
 
-        print(proc_queue)
+    print(proc_queue)
 
     for x in range(len(proc)):
         proc[x]['progress'] = 0     # reset progress values
