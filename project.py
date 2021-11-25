@@ -490,5 +490,9 @@ canvas.get_tk_widget().grid(row=0, column=0)
 frm_timeline.grid(row=5, column=0, columnspan=2,
                   sticky=tk.W+tk.E, pady=10, padx=7)
 
+####### STYLE #######
+style = ttk.Style()
+style.theme_use("clam")
+
 
 window.mainloop()
