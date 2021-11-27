@@ -198,9 +198,9 @@ def update_queue_display(time):
                  text='', values=(process_name))
 
 
-def shortest_job_next():
+def before_algorithm():
     global y_points
-    global proc_queue
+    global y_labels
 
     # update y_values according to number of processes
     y_points = y_points[:count]
@@ -210,8 +210,56 @@ def shortest_job_next():
     for p in range(count):
         y_labels.append(data[p]['name'])
 
-    animation = []
+
+def compute_x_values(proc):
+    global proc_queue
     x_values = []
+
+    for x in range(len(proc)):
+        x_values.append([])
+
+    # computing x_values based on state of queue at different times
+    for q in range(len(proc_queue)):
+        for p in range(len(proc)):
+
+            # if the queue is not empty at this time
+            if len(proc_queue[q]) > 0:
+                # find process at top of the queue
+                if proc_queue[q][0] == proc[p]['index']:
+                    if proc[p]['progress'] == 0:
+                        # if process is just starting
+                        proc[p]['progress'] += 1
+                        # store start as current time in the queue
+                        proc[p]['start'] = q
+                        x_values[p].append(
+                            (proc[p]['start'], proc[p]['progress']))
+
+                    elif 0 < proc[p]['progress'] < proc[p]['burst']:
+                        # a process that has started and is not finished will increse in progress
+                        proc[p]['progress'] += 1
+                        x_values[p].append(
+                            (proc[p]['start'], proc[p]['progress']))
+                else:
+                    # process that is not executing has its x_values repeated
+                    x_values[p].append(
+                        (proc[p]['start'], proc[p]['progress']))
+
+            # if the queue is empty at this time
+            else:
+                # if the queue is empty at this time no process is executed
+                # process that is not executing has its x_values repeated
+                x_values[p].append((proc[p]['start'], proc[p]['progress']))
+
+    return x_values
+
+
+def shortest_job_next():
+    global proc_queue
+
+    # prepare the gantt chart axis
+    before_algorithm()
+
+    animation = []
     proc = []
     executing = -1
 
@@ -257,47 +305,14 @@ def shortest_job_next():
             # process in progress
             executing = proc_queue[t][0]
 
-        print("executing " + str(executing) + " prog " +
-              str(proc[executing]['progress']))
-
     print(proc_queue)
 
     for x in range(len(proc)):
         proc[x]['progress'] = 0     # reset progress values
         proc[x]['start'] = 0        # reset start values
-        x_values.append([])
 
-    # computing x_values based on state of queue at different times
-    for q in range(len(proc_queue)):
-        for p in range(len(proc)):
-
-            # if the queue is not empty at this time
-            if len(proc_queue[q]) > 0:
-                # find process at top of the queue
-                if proc_queue[q][0] == proc[p]['index']:
-                    if proc[p]['progress'] == 0:
-                        # if process is just starting
-                        proc[p]['progress'] += 1
-                        # store start as current time in the queue
-                        proc[p]['start'] = q
-                        x_values[p].append(
-                            (proc[p]['start'], proc[p]['progress']))
-
-                    elif 0 < proc[p]['progress'] < proc[p]['burst']:
-                        # a process that has started and is not finished will increse in progress
-                        proc[p]['progress'] += 1
-                        x_values[p].append(
-                            (proc[p]['start'], proc[p]['progress']))
-                else:
-                    # process that is not executing has its x_values repeated
-                    x_values[p].append(
-                        (proc[p]['start'], proc[p]['progress']))
-
-            # if the queue is empty at this time
-            else:
-                # if the queue is empty at this time no process is executed
-                # process that is not executing has its x_values repeated
-                x_values[p].append((proc[p]['start'], proc[p]['progress']))
+    # compute x values for gantt chart
+    x_values = compute_x_values(proc)
 
     print(x_values)
 
