@@ -162,13 +162,25 @@ def advance_time():
 
 
 def total_time():
-    # accumulates the duration times for all processes
     global time_max
 
+    # accumulate the duration times for all processes
     t = 0
     for p in range(len(data)):
         t += data[p]['burst']
-    time_max = t
+
+    # find latest end time
+    ends = []
+    for p in range(len(data)):
+        ends.append(data[p]['burst'] + data[p]['arrival'])
+    max_end = max(ends)
+
+    if t > max_end:
+        time_max = t
+    else:
+        time_max = max_end
+
+    print("max time is " + str(time_max))
 
 
 def update_queue_display(time):
@@ -221,8 +233,8 @@ def shortest_job_next():
             if proc[a]['arrival'] == t:
                 proc_queue[t].append(a)
 
-        if executing != -1:
-            # if process is currently being executed
+        # if process is currently being executed
+        if executing != -1 and len(proc_queue[t]) > 0:
             proc[executing]['progress'] += 1
 
             # is process finihsed
@@ -230,12 +242,12 @@ def shortest_job_next():
                 proc_queue[t].pop(0)  # remove from top of queue
                 executing = -1
 
-        if executing == -1:
+        if executing == -1 and len(proc_queue[t]) > 0:
             # choose process with shortest burst time
             short = 0
 
             for i in range(len(proc_queue[t])):
-                if proc[i]['burst'] < proc[short]['burst']:
+                if proc[proc_queue[t][i]]['burst'] < proc[proc_queue[t][short]]['burst']:
                     short = i
 
             # move the shortest process to the top of the queue
@@ -243,8 +255,10 @@ def shortest_job_next():
             proc_queue[t].insert(0, s)
 
             # process in progress
-            executing = short
-            #proc[executing]['progress'] += 1
+            executing = proc_queue[t][0]
+
+        print("executing " + str(executing) + " prog " +
+              str(proc[executing]['progress']))
 
     print(proc_queue)
 
@@ -256,23 +270,34 @@ def shortest_job_next():
     # computing x_values based on state of queue at different times
     for q in range(len(proc_queue)):
         for p in range(len(proc)):
-            # find process at top of the queue
-            if proc_queue[q][0] == proc[p]['index']:
-                if proc[p]['progress'] == 0:
-                    # if process is just starting
-                    proc[p]['progress'] += 1
-                    # store start as current time in the queue
-                    proc[p]['start'] = q
-                    x_values[p].append((proc[p]['start'], proc[p]['progress']))
 
-                elif 0 < proc[p]['progress'] < proc[p]['burst']:
-                    # a process that has started and is not finished will increse in progress
-                    proc[p]['progress'] += 1
-                    x_values[p].append((proc[p]['start'], proc[p]['progress']))
+            # if the queue is not empty at this time
+            if len(proc_queue[q]) > 0:
+                # find process at top of the queue
+                if proc_queue[q][0] == proc[p]['index']:
+                    if proc[p]['progress'] == 0:
+                        # if process is just starting
+                        proc[p]['progress'] += 1
+                        # store start as current time in the queue
+                        proc[p]['start'] = q
+                        x_values[p].append(
+                            (proc[p]['start'], proc[p]['progress']))
+
+                    elif 0 < proc[p]['progress'] < proc[p]['burst']:
+                        # a process that has started and is not finished will increse in progress
+                        proc[p]['progress'] += 1
+                        x_values[p].append(
+                            (proc[p]['start'], proc[p]['progress']))
+                else:
+                    # process that is not executing has its x_values repeated
+                    x_values[p].append(
+                        (proc[p]['start'], proc[p]['progress']))
+
+            # if the queue is empty at this time
             else:
+                # if the queue is empty at this time no process is executed
                 # process that is not executing has its x_values repeated
-                x_values[p].append(
-                    (proc[p]['start'], proc[p]['progress']))
+                x_values[p].append((proc[p]['start'], proc[p]['progress']))
 
     print(x_values)
 
