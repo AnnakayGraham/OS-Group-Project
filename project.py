@@ -176,6 +176,15 @@ def total_time():
         ends.append(data[p]['burst'] + data[p]['arrival'])
     max_end = max(ends)
 
+    # find earliest start time
+    starts = []
+    for p in range(len(data)):
+        starts.append(data[p]['arrival'])
+    min_start = min(starts)
+
+    t += min_start
+    max_end += min_start
+
     if t > max_end:
         time_max = t
     else:
@@ -277,7 +286,7 @@ def shortest_job_next():
             # copy previous state of the queue
             proc_queue.append(proc_queue[t-1][:])
 
-        # add indices of arriving processes to the end pf the queue
+        # add indices of arriving processes to the end of the queue
         for a in range(len(proc)):
             if proc[a]['arrival'] == t:
                 proc_queue[t].append(a)
