@@ -229,7 +229,16 @@ def advance_time():
     global q_lineup
 
     time += 1
-    # TO DO update system clock display
+    if time / 60 >= 1:
+        minute = str(round(time/60))
+        seconds = time % 60
+        clock_time = str(minute) + ":" + str(seconds)
+    else:
+        if time > 9:
+            clock_time = "0:" + str(time)
+        else:
+            clock_time = "0:0" + str(time)
+    lbl_clock.config(text=str(clock_time))
     # TO DO add arriving process name to queue display
     # TO DO add arriving process number to proc_queue
 
