@@ -97,6 +97,7 @@ def add():
                 ent_arrival.delete(0, tk.END)
                 ent_burst.delete(0, tk.END)
                 ent_priority.delete(0, tk.END)
+# END OF add
 
 
 def remove():
@@ -108,12 +109,14 @@ def remove():
         # remove value from data list
         del data[int(selected)]
         table.delete(selected)
+# END OF remove
 
 
 def run():
     if(selected_algo == algos[0]):
         total_time()
         shortest_job_next()
+# END OF run
 
 
 def animate(y_points, y_labels, animation):
@@ -128,7 +131,6 @@ def animate(y_points, y_labels, animation):
 
         for p in range(count):
             # for each process
-            # TO DO remove finished process if fin value is eqal to i
 
             # values for the animation
             # xrange - (x-position of rectancle, width of rectangle)
@@ -147,6 +149,7 @@ def animate(y_points, y_labels, animation):
         plt.pause(1.0)  # pause for one second
         canvas.draw()
         canvas.flush_events()
+# END OF animate
 
 
 def select_SJN_algo():
@@ -154,13 +157,18 @@ def select_SJN_algo():
 
     selected_algo = algos[0]
     ent_priority['bg'] = "black"
+# END OF select_SJN_algo
 
 
 def advance_time():
     global time
 
     time += 1
-    # TO DO update system clock display
+    minutes = str(time // 60).zfill(2)
+    seconds = str(time % 60).zfill(2)
+    lbl_clock.configure(text=minutes + " : " + seconds)
+
+# END OF advance_time
 
 
 def total_time():
@@ -183,6 +191,7 @@ def total_time():
         time_max = max_end
 
     print("max time is " + str(time_max))
+# END OF total_time
 
 
 def update_queue_display(time):
@@ -198,6 +207,7 @@ def update_queue_display(time):
 
         q.insert(parent='', index='end', iid=pos,
                  text='', values=(process_name))
+# END OF update_queue_display
 
 
 def before_algorithm():
@@ -211,6 +221,7 @@ def before_algorithm():
     y_labels = []
     for p in range(count):
         y_labels.append(data[p]['name'])
+# END OF before_algorithm
 
 
 def compute_x_values(proc):
@@ -253,6 +264,7 @@ def compute_x_values(proc):
                 x_values[p].append((proc[p]['start'], proc[p]['progress']))
 
     return x_values
+# END OF compute_x_values
 
 
 def shortest_job_next():
@@ -323,6 +335,57 @@ def shortest_job_next():
         animation.append({"xranges": x_values[x], "yrange": y_ranges[x]})
 
     animate(y_points, y_labels, animation)
+# END OF shortest_job_next
+
+
+def reset():
+    global count
+    global time
+    global time_max
+    global selected_algo
+    global data
+    global proc_queue
+
+    global axes
+    global y_points
+    global y_labels
+    global y_ranges
+    #global x_ticks
+
+    count = 0
+    time = 0
+    time_max = 0
+    selected_algo = -1
+    data = []
+    proc_queue = []
+
+    y_points = [2, 6, 10, 14, 18, 22, 26]
+    y_labels = ['', '', '', '', '', '', '']
+    y_ranges = [(0, 4), (4, 4), (8, 4), (12, 4), (16, 4), (20, 4), (24, 4)]
+
+    for i in table.get_children():
+        table.delete(i)
+
+    for i in q.get_children():
+        q.delete(i)
+
+    lbl_message_text.configure(text=message)
+    lbl_clock.configure(text="00 : 00")
+
+    axes.clear()
+    axes.set_xlabel("Seconds")
+    axes.set_title("Process Execution Timeline")
+    axes.tick_params(left=False)
+    #x_ticks = np.arange(0, 61, 5)
+    axes.set_xticks(x_ticks)
+    axes.set_ylim(0, 32)
+    axes.set_yticks(y_points)
+    axes.set_yticklabels(y_labels)
+    canvas.draw()
+    canvas.flush_events()
+
+    window.update()
+# END OF reset
 
 
 ######################################################
@@ -489,7 +552,7 @@ q.heading("process", text="Process Queue", anchor='center')
 
 # system clock
 lbl_clock = tk.Label(
-    text="0 : 00",
+    text="00 : 00",
     foreground="yellow",
     background="black",
     height=2,
@@ -513,7 +576,8 @@ lbl_message_text.grid(row=0, column=0)
 
 # reset button
 btn_reset = ttk.Button(
-    text="RESET"
+    text="RESET",
+    command=reset
 )
 btn_reset.grid(row=3, column=2)
 
