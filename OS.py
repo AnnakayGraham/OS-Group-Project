@@ -92,6 +92,9 @@ def add():
                 elif (selected_algo == "RR"):
                   data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
                                 "burst": int(ent_burst.get())})
+                elif (selected_algo == "P"):
+                    data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
+                                "burst": int(ent_burst.get()),'priority':int(ent_priority.get())})
 
                 ent_name.delete(0, tk.END)
                 ent_arrival.delete(0, tk.END)
@@ -118,6 +121,9 @@ def run():
     elif(selected_algo == "RR"):
       total_time()
       roundrobin()
+    elif (selected_algo =="P"):
+        total_time()
+        prioritySchedule()
    
     
 
@@ -438,11 +444,42 @@ def roundrobin():
         animation.append({"xranges": x_values[x], "yrange": y_ranges[x]})
   animate(y_points, y_labels, animation)
 
- 
 
+######################################################
+# Priority Schedule Algorithm
+######################################################
+def prioritySchedule():
+    proc = []
+    animation = []
+    global y_points
+    y_points = y_points[:count]
+    x_values = []
+    index={}
+    y_labels = []
+    executing = -1
+    for p in range(count):
+        y_labels.append(data[p]['name'])
+
+    #the process's burst time, arrival time, start time, progress and priority
+    for i in range(count):
+        proc.append({"index":i, "burst":data[i]['burst'], "arrival":data[i]['arrival'], "start":0, "progress":0, "priority":data[i] ["priority"]})
+    
+
+    for i in range(0, len(proc)-1):
+        for j in range(0, len(proc)-i-1):
+            if proc[j]['priority'] > proc[j+1]['priority']:
+                proc[j], proc[j+1] = proc[j+1], proc[j]
+
+    new_times = []
+    start = 0
+    for r in range(len(proc)):
+        # [process index, start, end]
+        if r == 0:
+            new_times.append([proc[r][0], 0, proc[r][1]])
+            start = proc[r][1] 
             
-  
-  
+       # add first processes end time
+
 ######################################################
 # Code for the gui is below
 ######################################################
