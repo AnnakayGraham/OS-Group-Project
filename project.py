@@ -144,6 +144,7 @@ def select_SJN_algo():
 
     selected_algo = algos[0]
     ent_priority['bg'] = "black"
+    btn_SJN.config(relief="sunken")
 # END OF select_SJN_algo
 
 
@@ -366,12 +367,17 @@ def reset():
     axes.tick_params(left=False)
     x_ticks = np.arange(0, 61, 5)
     axes.set_xticks(x_ticks)
-    #axes.set_xlim(0, 60)
-    #axes.set_ylim(0, 32)
+    axes.set_xlim(0, 60)
+    axes.set_ylim(0, 32)
     axes.set_yticks(y_points)
     axes.set_yticklabels(y_labels)
     canvas.draw()
     canvas.flush_events()
+
+    btn_SJN.config(relief="raised")
+    btn_FCFS.config(relief="raised")
+    btn_P.config(relief="raised")
+    btn_RR.config(relief="raised")
 
     window.update()
 # END OF reset
