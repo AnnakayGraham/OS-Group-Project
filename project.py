@@ -54,20 +54,6 @@ axes.set_ylim(0, 32)
 axes.set_yticks(y_points)
 axes.set_yticklabels(y_labels)
 
-"""
-# values for the animation
-# xrange - (x-position of rectancle, width of rectangle)
-# yrange - (y-position of rectancle, height of rectangle)
-algo_values = [
-    {"xranges": [(1, 1), (4, 0), (6, 2), (11, 5)], "yrange": (0, 4)},
-    {"xranges": [(0, 5), (5, 0), (5, 0), (5, 0)], "yrange": (4, 4)},
-    {"xranges": [(5, 2), (7, 2), (9, 2), (9, 0)], "yrange": (8, 4)},
-    {"xranges": [(6, 4), (10, 0), (10, 0), (10, 2)], "yrange": (12, 4)},
-    {"xranges": [(11, 4), (20, 2), (15, 6), (23, 5)], "yrange": (16, 4)},
-    {"xranges": [(3, 1), (6, 2), (18, 10), (30, 1)], "yrange": (20, 4)},
-    {"xranges": [(1, 4), (7, 15), (23, 2), (30, 10)], "yrange": (24, 4)}
-]
-"""
 
 ######################################################
 # Code for the functions is below
@@ -101,6 +87,7 @@ def add():
 
 def remove():
     # remove selected process from table and from stored data
+    global count
 
     selected = table.focus()
     # prevent trying to remove when nothing is slected in table
@@ -108,6 +95,7 @@ def remove():
         # remove value from data list
         del data[int(selected)]
         table.delete(selected)
+        count = count - 1
 # END OF remove
 
 
@@ -214,12 +202,12 @@ def before_algorithm():
     global y_labels
 
     # update y_values according to number of processes
-    y_points = y_points[:count]
+    #y_points = y_points[:count]
 
     # process names for the y-axis of the chart
-    y_labels = []
+    #y_labels = []
     for p in range(count):
-        y_labels.append(data[p]['name'])
+        y_labels[p] = data[p]['name']
 # END OF before_algorithm
 
 
@@ -371,13 +359,15 @@ def reset():
     lbl_message_text.configure(text=message)
     lbl_clock.configure(text="00 : 00")
 
-    axes.clear()
+    axes.cla()
+    axes.grid(True)
     axes.set_xlabel("Seconds")
     axes.set_title("Process Execution Timeline")
     axes.tick_params(left=False)
-    #x_ticks = np.arange(0, 61, 5)
+    x_ticks = np.arange(0, 61, 5)
     axes.set_xticks(x_ticks)
-    axes.set_ylim(0, 32)
+    #axes.set_xlim(0, 60)
+    #axes.set_ylim(0, 32)
     axes.set_yticks(y_points)
     axes.set_yticklabels(y_labels)
     canvas.draw()
