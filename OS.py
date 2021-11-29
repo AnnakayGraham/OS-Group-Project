@@ -101,13 +101,12 @@ def add():
 
 def remove():
     # remove selected process from table and from stored data
-    global count
+
     selected = table.focus()
     # prevent trying to remove when nothing is slected in table
     if selected:
         # remove value from data list
         del data[int(selected)]
-        count -=1 
         table.delete(selected)
 
 
@@ -131,6 +130,7 @@ def animate(y_points, y_labels, animation):
     for i in range(time_max):
         # for each time unit
         advance_time()
+        update_queue_display(i)
 
         for p in range(count):
             # for each process
@@ -228,17 +228,7 @@ def advance_time():
     global q_lineup
 
     time += 1
-
-    if time / 60 >= 1:
-        minute = str(round(time/60))
-        seconds = time % 60
-        clock_time = str(minute) + ":" + str(seconds)
-    else:
-        if time > 9:
-            clock_time = "0:" + str(time)
-        else:
-            clock_time = "0:0" + str(time)
-    lbl_clock.config(text=str(clock_time))
+    # TO DO update system clock display
     # TO DO add arriving process name to queue display
     # TO DO add arriving process number to proc_queue
 
@@ -246,10 +236,34 @@ def advance_time():
 def total_time():
     global time_max
     # store largest arrival time
+    global time_max
+
+    # accumulate the duration times for all processes
     t = 0
     for p in range(len(data)):
         t += data[p]['burst']
-    time_max = t
+
+    # find latest end time
+    ends = []
+    for p in range(len(data)):
+        ends.append(data[p]['burst'] + data[p]['arrival'])
+    max_end = max(ends)
+
+    # find earliest start time
+    starts = []
+    for p in range(len(data)):
+        starts.append(data[p]['arrival'])
+    min_start = min(starts)
+
+    t += min_start
+    max_end += min_start
+
+    if t > max_end:
+        time_max = t
+    else:
+        time_max = max_end
+
+    print("max time is " + str(time_max))
 
 
 def add_to_queue(proc_name):
@@ -258,12 +272,32 @@ def add_to_queue(proc_name):
     # TO DO add process number to proc_queue
     pass
 
+def before_algorithm():
+    global y_points
+    global y_labels
 
-def update_queue():
-    global proc_queue
-    # TO DO reorder queue disply according to priority when  new process arrives
-    # TO DO remove finished processes based on their progress status from display as well as proc_queue
-    pass
+    # update y_values according to number of processes
+    y_points = y_points[:count]
+
+    # process names for the y-axis of the chart
+    y_labels = []
+    for p in range(count):
+        y_labels.append(data[p]['name'])
+
+def update_queue_display(time):
+    # clear the queue display table
+    for i in q.get_children():
+        q.delete(i)
+
+    # NOTE - proc_queue has the form [ [0,3], [3], ... ]
+    #   with one inner list for each time, having index number and processes to be displayed
+    for pos in range(len(proc_queue[time])):
+        process_index = proc_queue[time][pos]
+        process_name = data[process_index]['name']
+
+        q.insert(parent='', index='end', iid=pos,
+                 text='', values=(process_name))
+
 
 
 def is_queue_empty():
@@ -353,54 +387,136 @@ def shortest_job_next():
         animation.append({"xranges": x_values[x], "yrange": y_ranges[x]})
 
     animate(y_points, y_labels, animation)
-def roundrobin():
-  # retrieve time slice/ time quantum
-  timeslice = int(ent_time.get())
-  burst=[]
-  animation=[]
-  times=[]
-  test=[]
-  #process queue based on arrival time 
-  process_queue = []
-  global y_points
-  y_points = y_points[:count]
-  test=[]
-  x_values=[]
-  index={}
-  y_labels = []
-  for p in range(count):
-    y_labels.append(data[p]['name'])
-    #Populate process queue
-  for p in range(count):
-      #Creates a tuple of process id and arrival time (process id, arrival time)
-      process_queue.append((p,data[p]['arrival']))
-  for i in range(count):
-    burst.append(data[i]['burst'])
-  newList= list(map(list,zip(y_labels,burst)))
-  for i in range(len(y_labels)):
-    index.setdefault(y_labels[i],i)
-  for i in newList:
-    times.append((index[i[0]],i[1]))
-  start=0
-  end=0
- 
-  #Bubble process queue based on arrival time 
-  for i in range(len(process_queue)):
-    for x in range(len(process_queue)-1):
-        if process_queue[x+1][1] < process_queue[x][1]: 
-            process_queue[x],process_queue[x+1]  = process_queue[x+1],process_queue[x]
-  for i in times:
-    if i[1] >timeslice:
-        newt= i[1]-timeslice
-        end= end+ timeslice
-        test.append([i[0],start,end])
-        times.append([i[0],newt])
-        start=end
-    else:
-        start=end
-        end=end+i[1]
-        test.append([i[0],start,end])
 
+def roundrobin():
+    global y_points
+    global proc_queue
+
+    # update y_values according to number of processes
+    y_points = y_points[:count]
+
+    # process names for the y-axis of the chart
+    y_labels = []
+    for p in range(count):
+        y_labels.append(data[p]['name'])
+
+    animation = []
+    x_values = []
+    proc = []
+    executing = -1
+    last = -1
+    timeslice = int(ent_time.get())
+
+    # store process indices and burst times and arrival times
+    for p in range(count):
+        proc.append({"index": p, "burst": data[p]['burst'],
+                    "arrival": data[p]['arrival'], "start": 0, "progress": 0})
+    #print(proc)
+
+    for t in range(time_max):
+        if t == 0:
+            proc_queue.append([])
+        else:
+            # copy previous state of the queue
+            proc_queue.append(proc_queue[t-1][:])
+
+        # add indices of arriving processes to the end of the queue
+        for a in range(len(proc)):
+            if proc[a]['arrival'] == t:
+                proc_queue[t].append(a)
+
+        # if process is currently being executed
+        if executing != -1 and len(proc_queue[t]) > 0:
+            proc[executing]['progress'] += 1
+
+            # is process finihsed
+            if proc[executing]['progress'] >= proc[executing]['burst']:
+                proc_queue[t].pop(0)  # remove from top of queue
+                executing = -1
+
+            # if slice is finished and last process executed is still in queue
+            if proc[executing]['progress'] % timeslice == 0 and executing != -1:
+                currentindex = proc_queue[t].index(last)
+                nextindex = (currentindex + 1) % len(proc_queue[t])
+
+                # move to the top
+                n = proc_queue[t].pop(nextindex)
+                proc_queue[t].insert(0, n)
+
+                # process in progress
+                executing = proc_queue[t][0]
+                last = executing
+
+        if executing == -1 and len(proc_queue[t]) > 0:
+            # process in progress
+            executing = proc_queue[t][0]
+            last = executing
+
+        #print(t, executing)
+   # print(proc_queue)
+
+    for x in range(len(proc)):
+        proc[x]['progress'] = 0     # reset progress values
+        proc[x]['start'] = 0        # reset start values
+        x_values.append([])
+
+    start_track = 0
+    # computing x_values based on state of queue at different times
+    for q in range(len(proc_queue)):
+        for p in range(len(proc)):
+
+            # if the queue is not empty at this time
+            if len(proc_queue[q]) > 0:
+                # find process at top of the queue
+                if proc_queue[q][0] == proc[p]['index']:
+                    if proc[p]['progress'] == 0:
+                        # if process is just starting
+                        proc[p]['progress'] += 1
+                        # store start as current time in the queue
+                        proc[p]['start'] = q
+                        x_values[p].append(
+                            (proc[p]['start'], proc[p]['progress']))
+
+                        start_track += 1
+
+                    elif 0 < proc[p]['progress'] < proc[p]['burst']:
+                        # a process that has started and is not finished will increse in progress
+
+                        # a process starting the slice has its start at the end
+                        #   end of the last process, and its progress at 0
+                        if proc[p]['progress'] % timeslice == 0:
+                            proc[p].update({'progress': 1})
+                            proc[p].update({'start': start_track})
+                            x_values[p].append(
+                                (proc[p]['start'], proc[p]['progress']))
+
+                            start_track += 1
+
+                        else:
+                            # a process in the slice uses its previous start
+                            proc[p]['progress'] += 1
+                            x_values[p].append(
+                                (proc[p]['start'], proc[p]['progress']))
+
+                            start_track += 1
+                else:
+                    # process that is not executing has its x_values repeated
+                    x_values[p].append(
+                        (proc[p]['start'], proc[p]['progress']))
+
+            # if the queue is empty at this time
+            else:
+                # if the queue is empty at this time no process is executed
+                # process that is not executing has its x_values repeated
+                x_values[p].append((proc[p]['start'], proc[p]['progress']))
+
+    #print(x_values)
+
+    # for each process, add x-values and yrange
+    for x in range(count):
+        animation.append({"xranges": x_values[x], "yrange": y_ranges[x]})
+
+    animate(y_points, y_labels, animation)
   
  
 
