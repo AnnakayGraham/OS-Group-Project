@@ -163,7 +163,7 @@ def forget(widget):
 def select_SJN_algo():
     global selected_algo
   #change to algo[]
-    selected_algo = "SJN"
+    selected_algo = algo[0]
     forget(ent_priority)
     forget(ent_time)
     forget(lbl_priority)
@@ -173,6 +173,7 @@ def select_SJN_algo():
       if col != "priority":
         displaycolumns.append(col)
     table["displaycolumn"]=displaycolumns
+    btn_SJN.config(relief="sunken")
     
    
 
@@ -180,7 +181,7 @@ def select_RR_algo():
     global selected_algo
 
     #change to algo[]
-    selected_algo = "RR"
+    selected_algo = algo[3]
     forget(ent_priority)
     forget(lbl_priority)
     lbl_time.grid(row=0, column=4)
@@ -190,6 +191,7 @@ def select_RR_algo():
       if col != "priority":
         displaycolumns.append(col)
     table["displaycolumn"]=displaycolumns
+    btn_RR.config(relief="sunken")
     
     
     
@@ -198,7 +200,7 @@ def select_priority_algo():
     global selected_algo
 
     #change to algo[]
-    selected_algo = "P"
+    selected_algo = algo[2]
     ent_priority.grid(row=1, column=3)
     lbl_priority.grid(row=0, column=3)
     forget(lbl_time)
@@ -207,11 +209,12 @@ def select_priority_algo():
     for col in table["columns"]:
       displaycolumns.append(col)
     table["displaycolumn"]=displaycolumns
+    btn_P.config(relief="sunken")
 
 def select_FcFs_algo():
   global selected_algo
   #change to algo[]
-  selected_algo = "FCFS"
+  selected_algo = algo[1]
   forget(ent_priority)
   forget(ent_time)
   forget(lbl_priority)
@@ -221,6 +224,7 @@ def select_FcFs_algo():
     if col != "priority":
       displaycolumns.append(col)
   table["displaycolumn"]=displaycolumns
+  btn_FCFS.config(relief="sunken")
  
 
 def advance_time():
