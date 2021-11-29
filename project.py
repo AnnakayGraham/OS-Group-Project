@@ -88,7 +88,6 @@ def add():
 
                 if(selected_algo == algos[0]):
                     # add data for shortest job next
-                    fin_time = int(ent_arrival.get()) + int(ent_burst.get())
                     data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
                                 "burst": int(ent_burst.get())})
                     # print(data)
