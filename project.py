@@ -1,3 +1,4 @@
+from math import e
 from matplotlib.animation import FuncAnimation
 import tkinter as tk
 from tkinter import ttk
@@ -65,13 +66,29 @@ def add():
     global count
     # prevent entering if required entries are blank
     if len(ent_name.get()) != 0 and len(ent_arrival.get()) != 0 and len(ent_burst.get()) != 0:
+        try:
+            int(ent_arrival.get())
+            int(ent_burst.get())
+        except Exception as ex :
+            print(ex)
+            message = "An Incorect value was entered"
+            lbl_message_text.configure(text=message) 
+            return
+        if selected_algo == "P":
+            try:
+                int(ent_priority.get())
+            except Exception as ex:
+                print(ex)
+                message = "An invalid priority was entered"
+                lbl_message_text.configure(text=message) 
+                return
         # if an algorithm is not selected, then do not add anything
         if selected_algo != -1:
             if(count < proc_max+1):
                 table.insert(parent='', index='end', iid=count, text='', values=(
                     ent_name.get(), ent_arrival.get(), ent_burst.get(), ent_priority.get()))
                 count += 1
-
+                
                 if(selected_algo == algos[0]):
                     # add data for shortest job next
                     data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
@@ -83,6 +100,7 @@ def add():
                     data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
                                 "burst": int(ent_burst.get())})
                 elif (selected_algo == "P"):
+
                     data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
                                 "burst": int(ent_burst.get()),'priority':int(ent_priority.get())})
                     # print(data)
@@ -399,7 +417,13 @@ def roundrobin():
     proc = []
     executing = -1
     last = -1
-    timeslice = int(ent_time.get())
+    try:
+        timeslice = int(ent_time.get())
+    except Exception as ex:
+        print(ex)
+        message = "A invalid time slice was entered"
+        lbl_message_text.configure(text=message) 
+        return
 
     # store process indices and burst times and arrival times
     for p in range(count):
@@ -870,7 +894,8 @@ btn_RR = tk.Button(
     width=28,
     height=2,
     bg="black",
-    fg="white"
+    fg="white",
+    command = select_RR_algo
 )
 btn_RR.grid(row=0, column=4)
 
