@@ -99,7 +99,9 @@ def add():
                     data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
                                 "burst": int(ent_burst.get()),'priority':int(ent_priority.get())})
                     # print(data)
-
+                elif (selected_algo == "RR"):
+                  data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
+                                "burst": int(ent_burst.get())})
                 ent_name.delete(0, tk.END)
                 ent_arrival.delete(0, tk.END)
                 ent_burst.delete(0, tk.END)
@@ -107,6 +109,7 @@ def add():
 
 
 def remove():
+    global count
     # remove selected process from table and from stored data
 
     selected = table.focus()
@@ -115,7 +118,7 @@ def remove():
         # remove value from data list
         del data[int(selected)]
         table.delete(selected)
-
+        count -=1
 
 def run():
     if(selected_algo == algos[0]):
@@ -127,6 +130,11 @@ def run():
     if (selected_algo =="P"):
         total_time()
         prioritySchedule()
+
+    elif(selected_algo == "RR"):
+      total_time()
+      roundrobin()
+   
    
 
 def animate(y_points, y_labels, animation):
@@ -168,38 +176,107 @@ def animate(y_points, y_labels, animation):
         canvas.flush_events()
 
 
+def forget(widget):
+  widget.grid_forget()
+# shows relevant entry
+
+
 def select_SJN_algo():
     global selected_algo
-
+  #change to algo[]
     selected_algo = algos[0]
-    ent_priority['bg'] = "black"
+    forget(ent_priority)
+    forget(ent_time)
+    forget(lbl_priority)
+    forget(lbl_time)
+    displaycolumns=[]
+    for col in table["columns"]:
+      if col != "priority":
+        displaycolumns.append(col)
+    table["displaycolumn"]=displaycolumns
+    btn_RR.config(bg="black")
+    btn_SJN.config(bg="grey")
+    btn_FCFS.config(bg="black")
+    btn_P.config(bg="black")
+    
+    
+   
 
-def select_FCFS_algo():
+def select_RR_algo():
     global selected_algo
 
-    selected_algo = algos[1]
-    ent_priority['bg'] = "black"    
+    #change to algo[]
+    selected_algo = algos[3]
+    forget(ent_priority)
+    forget(lbl_priority)
+    lbl_time.grid(row=0, column=4)
+    ent_time.grid(row=1, column=4)
+    displaycolumns=[]
+    for col in table["columns"]:
+      if col != "priority":
+        displaycolumns.append(col)
+    table["displaycolumn"]=displaycolumns
+    btn_RR.config(bg="grey")
+    btn_SJN.config(bg="black")
+    btn_FCFS.config(bg="black")
+    btn_P.config(bg="black")
+    
+    
+    
 
- 
 def select_priority_algo():
     global selected_algo
 
     #change to algo[]
-    selected_algo = "P"
+    selected_algo = algos[2]
     ent_priority.grid(row=1, column=3)
     lbl_priority.grid(row=0, column=3)
+    forget(lbl_time)
+    forget(ent_time)
     displaycolumns=[]
     for col in table["columns"]:
       displaycolumns.append(col)
     table["displaycolumn"]=displaycolumns
+    btn_RR.config(bg="black")
+    btn_SJN.config(bg="black")
+    btn_FCFS.config(bg="black")
+    btn_P.config(bg="grey")
 
+def select_FCFS_algo():
+  global selected_algo
+  #change to algo[]
+  selected_algo = algos[1]
+  forget(ent_priority)
+  forget(ent_time)
+  forget(lbl_priority)
+  forget(lbl_time)
+  displaycolumns=[]
+  for col in table["columns"]:
+    if col != "priority":
+      displaycolumns.append(col)
+  table["displaycolumn"]=displaycolumns
+  btn_RR.config(bg="black") 
+  btn_SJN.config(bg="black")
+  btn_FCFS.config(bg="grey")
+  btn_P.config(bg="black")
+ 
         
 
 def advance_time():
     global time
 
     time += 1
-    # TO DO update system clock display
+    if time / 60 >= 1:
+        minute = str(round(time/60))
+        seconds = time % 60
+        clock_time = str(minute) + ":" + str(seconds)
+    else:
+        if time > 9:
+            clock_time = "0:" + str(time)
+        else:
+            clock_time = "0:0" + str(time)
+    lbl_clock.config(text=str(clock_time))
+
 
 
 def total_time():
@@ -308,7 +385,136 @@ def compute_x_values(proc):
                 x_values[p].append((proc[p]['start'], proc[p]['progress']))
 
     return x_values
+def roundrobin():
+    global y_points
+    global proc_queue
 
+    # update y_values according to number of processes
+    y_points = y_points[:count]
+
+    # process names for the y-axis of the chart
+    y_labels = []
+    for p in range(count):
+        y_labels.append(data[p]['name'])
+
+    animation = []
+    x_values = []
+    proc = []
+    executing = -1
+    last = -1
+    timeslice = int(ent_time.get())
+
+    # store process indices and burst times and arrival times
+    for p in range(count):
+        proc.append({"index": p, "burst": data[p]['burst'],
+                    "arrival": data[p]['arrival'], "start": 0, "progress": 0})
+    #print(proc)
+
+    for t in range(time_max):
+        if t == 0:
+            proc_queue.append([])
+        else:
+            # copy previous state of the queue
+            proc_queue.append(proc_queue[t-1][:])
+
+        # add indices of arriving processes to the end of the queue
+        for a in range(len(proc)):
+            if proc[a]['arrival'] == t:
+                proc_queue[t].append(a)
+
+        # if process is currently being executed
+        if executing != -1 and len(proc_queue[t]) > 0:
+            proc[executing]['progress'] += 1
+
+            # is process finihsed
+            if proc[executing]['progress'] >= proc[executing]['burst']:
+                proc_queue[t].pop(0)  # remove from top of queue
+                executing = -1
+
+            # if slice is finished and last process executed is still in queue
+            if proc[executing]['progress'] % timeslice == 0 and executing != -1:
+                currentindex = proc_queue[t].index(last)
+                nextindex = (currentindex + 1) % len(proc_queue[t])
+
+                # move to the top
+                n = proc_queue[t].pop(nextindex)
+                proc_queue[t].insert(0, n)
+
+                # process in progress
+                executing = proc_queue[t][0]
+                last = executing
+
+        if executing == -1 and len(proc_queue[t]) > 0:
+            # process in progress
+            executing = proc_queue[t][0]
+            last = executing
+
+        #print(t, executing)
+   # print(proc_queue)
+
+    for x in range(len(proc)):
+        proc[x]['progress'] = 0     # reset progress values
+        proc[x]['start'] = 0        # reset start values
+        x_values.append([])
+
+    start_track = 0
+    # computing x_values based on state of queue at different times
+    for q in range(len(proc_queue)):
+        for p in range(len(proc)):
+
+            # if the queue is not empty at this time
+            if len(proc_queue[q]) > 0:
+                # find process at top of the queue
+                if proc_queue[q][0] == proc[p]['index']:
+                    if proc[p]['progress'] == 0:
+                        # if process is just starting
+                        proc[p]['progress'] += 1
+                        # store start as current time in the queue
+                        proc[p]['start'] = q
+                        x_values[p].append(
+                            (proc[p]['start'], proc[p]['progress']))
+
+                        start_track += 1
+
+                    elif 0 < proc[p]['progress'] < proc[p]['burst']:
+                        # a process that has started and is not finished will increse in progress
+
+                        # a process starting the slice has its start at the end
+                        #   end of the last process, and its progress at 0
+                        if proc[p]['progress'] % timeslice == 0:
+                            proc[p].update({'progress': 1})
+                            proc[p].update({'start': start_track})
+                            x_values[p].append(
+                                (proc[p]['start'], proc[p]['progress']))
+
+                            start_track += 1
+
+                        else:
+                            # a process in the slice uses its previous start
+                            proc[p]['progress'] += 1
+                            x_values[p].append(
+                                (proc[p]['start'], proc[p]['progress']))
+
+                            start_track += 1
+                else:
+                    # process that is not executing has its x_values repeated
+                    x_values[p].append(
+                        (proc[p]['start'], proc[p]['progress']))
+
+            # if the queue is empty at this time
+            else:
+                # if the queue is empty at this time no process is executed
+                # process that is not executing has its x_values repeated
+                x_values[p].append((proc[p]['start'], proc[p]['progress']))
+
+    #print(x_values)
+
+    # for each process, add x-values and yrange
+    for x in range(count):
+        animation.append({"xranges": x_values[x], "yrange": y_ranges[x]})
+
+    animate(y_points, y_labels, animation)
+  
 
 def shortest_job_next():
     global proc_queue
@@ -603,7 +809,8 @@ btn_RR = tk.Button(
     width=25,
     height=2,
     bg="black",
-    fg="white"
+    fg="white",
+    command=select_RR_algo
 )
 btn_RR.grid(row=0, column=4)
 
@@ -634,21 +841,24 @@ frm_input.grid(row=3, column=0, pady=10)
 
 # labels
 lbl_name = tk.Label(master=frm_input, text="Process name",
-                    fg="black", bg="white", width=13)
+                    fg="yellow", bg="black", width=13)
 lbl_name.grid(row=0, column=0)
 
 lbl_arrival = tk.Label(master=frm_input, text="Arrival time",
-                       fg="black", bg="white", width=13)
+                       fg="yellow", bg="black", width=13)
 lbl_arrival.grid(row=0, column=1)
 
 lbl_burst = tk.Label(master=frm_input, text="Burst time",
-                     fg="black", bg="white", width=13)
+                     fg="yellow", bg="black", width=13)
 lbl_burst.grid(row=0, column=2)
 
 lbl_priority = tk.Label(master=frm_input, text="Priority",
-                        fg="black", bg="white", width=13)
+                        fg="yellow", bg="black", width=13)
 lbl_priority.grid(row=0, column=3)
 
+lbl_time = tk.Label(master=frm_input, text="Time Slice",
+                        fg="yellow", bg="black", width=13)
+lbl_time.grid(row=0, column=4)
 # entry fields
 ent_name = tk.Entry(master=frm_input, fg="black", bg="white", width=10)
 ent_name.grid(row=1, column=0)
@@ -661,6 +871,8 @@ ent_burst.grid(row=1, column=2)
 
 ent_priority = tk.Entry(master=frm_input, fg="black", bg="white", width=10)
 ent_priority.grid(row=1, column=3)
+ent_time = tk.Entry(master=frm_input, fg="black", bg="white", width=10)
+ent_time.grid(row=1, column=4)
 
 
 # frame for control buttons
