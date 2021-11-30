@@ -454,12 +454,9 @@ def roundrobin():
 
             # if slice is finished and last process executed is still in queue
             if proc[executing]['progress'] % timeslice == 0 and executing != -1:
-                currentindex = proc_queue[t].index(last)
-                nextindex = (currentindex + 1) % len(proc_queue[t])
-
-                # move to the top
-                n = proc_queue[t].pop(nextindex)
-                proc_queue[t].insert(0, n)
+                #adds process to the end of the queue
+                l=proc_queue[t].pop(0)
+                proc_queue[t].append(l)
 
                 # process in progress
                 executing = proc_queue[t][0]
