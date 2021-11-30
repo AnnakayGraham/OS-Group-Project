@@ -92,6 +92,9 @@ def add():
                 elif (selected_algo == "RR"):
                   data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
                                 "burst": int(ent_burst.get())})
+                elif (selected_algo == "P"):
+                    data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
+                                "burst": int(ent_burst.get()),'priority':int(ent_priority.get())})
 
                 ent_name.delete(0, tk.END)
                 ent_arrival.delete(0, tk.END)
@@ -118,6 +121,9 @@ def run():
     elif(selected_algo == "RR"):
       total_time()
       roundrobin()
+    elif (selected_algo =="P"):
+        total_time()
+        prioritySchedule()
    
     
 
@@ -447,11 +453,136 @@ def roundrobin():
         animation.append({"xranges": x_values[x], "yrange": y_ranges[x]})
   animate(y_points, y_labels, animation)
 
- 
+
+######################################################
+# Priority Schedule Algorithm
+######################################################
+def prioritySchedule():
+    proc = []
+    animation = []
+    global y_points
+    x_values = []
+    index={}
+    executing = -1
+    before_algorithm()
+
+    #the process's burst time, arrival time, start time, progress and priority
+    for i in range(count):
+        proc.append({"index":i, "burst":data[i]['burst'], "arrival":data[i]['arrival'], "start":0, "progress":0, "priority":data[i] ["priority"]})
+    
+
+    for i in range(0, len(proc)-1):
+        for j in range(0, len(proc)-i-1):
+            if proc[j]['priority'] > proc[j+1]['priority']:
+                proc[j], proc[j+1] = proc[j+1], proc[j]
+
+    for t in range(time_max):
+        if t == 0:
+            proc_queue.append([])
+        else:
+            # copy previous state of the queue
+            proc_queue.append(proc_queue[t-1][:])
+
+        # add indices of arriving processes to the end of the queue
+        for a in range(len(proc)):
+            if proc[a]['arrival'] == t:
+                proc_queue[t].append(a)
+
+        # if process is currently being executed
+        if executing != -1 and len(proc_queue[t]) > 0:
+            proc[executing]['progress'] += 1
+
+            # is process finihsed
+            if proc[executing]['progress'] >= proc[executing]['burst']:
+                proc_queue[t].pop(0)  # remove from top of queue
+                executing = -1
+
+        if executing == -1 and len(proc_queue[t]) > 0:
+            # choose process with highest priority 
+            priority = 0
+
+            for i in range(len(proc_queue[t])):
+                if proc[proc_queue[t][i]]['priority'] < proc[proc_queue[t][priority ]]['priority']:
+                    priority  = i
+            # move the shortest process to the top of the queue
+            s = proc_queue[t].pop(priority )
+            proc_queue[t].insert(0, s)
+
+            # process in progress
+            executing = proc_queue[t][0]
+
+    print(proc_queue)
+
+    for x in range(len(proc)):
+        proc[x]['progress'] = 0     # reset progress values
+        proc[x]['start'] = 0        # reset start values
+
+    # compute x values for gantt chart
+    x_values = compute_x_values(proc)
+
+    print(x_values)
+
+    # for each process, add x-values and yrange
+    for x in range(count):
+        animation.append({"xranges": x_values[x], "yrange": y_ranges[x]})
+
+    animate(y_points, y_labels, animation)
 
             
-  
-  
+       # add first processes end time
+def before_algorithm():
+    global y_points
+    global y_labels
+
+    # update y_values according to number of processes
+    y_points = y_points[:count]
+
+    # process names for the y-axis of the chart
+    y_labels = []
+    for p in range(count):
+        y_labels.append(data[p]['name'])
+
+
+def compute_x_values(proc):
+    global proc_queue
+    x_values = []
+
+    for x in range(len(proc)):
+        x_values.append([])
+
+    # computing x_values based on state of queue at different times
+    for q in range(len(proc_queue)):
+        for p in range(len(proc)):
+
+            # if the queue is not empty at this time
+            if len(proc_queue[q]) > 0:
+                # find process at top of the queue
+                if proc_queue[q][0] == proc[p]['index']:
+                    if proc[p]['progress'] == 0:
+                        # if process is just starting
+                        proc[p]['progress'] += 1
+                        # store start as current time in the queue
+                        proc[p]['start'] = q
+                        x_values[p].append(
+                            (proc[p]['start'], proc[p]['progress']))
+
+                    elif 0 < proc[p]['progress'] < proc[p]['burst']:
+                        # a process that has started and is not finished will increse in progress
+                        proc[p]['progress'] += 1
+                        x_values[p].append(
+                            (proc[p]['start'], proc[p]['progress']))
+                else:
+                    # process that is not executing has its x_values repeated
+                    x_values[p].append(
+                        (proc[p]['start'], proc[p]['progress']))
+
+            # if the queue is empty at this time
+            else:
+                # if the queue is empty at this time no process is executed
+                # process that is not executing has its x_values repeated
+                x_values[p].append((proc[p]['start'], proc[p]['progress']))
+
+    return x_values
 ######################################################
 # Code for the gui is below
 ######################################################
