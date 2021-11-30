@@ -135,8 +135,6 @@ def animate(y_points, y_labels, animation):
         # for each time unit
         advance_time()
         update_queue_display(i)
-      
-
 
         for p in range(count):
         
@@ -202,6 +200,7 @@ def total_time():
         ends.append(data[p]['burst'] + data[p]['arrival'])
     max_end = max(ends)
 
+
     # find earliest start time
     starts = []
     for p in range(len(data)):
@@ -215,6 +214,7 @@ def total_time():
         time_max = t
     else:
         time_max = max_end
+
 
 
 
@@ -233,7 +233,6 @@ def update_queue_display(time):
         #print(data[process_index]['name'])
 
         process_name = data[process_index]['name']
-
 
         q.insert(parent='', index='end', iid=pos,
                  text='', values=(process_name))
@@ -308,7 +307,9 @@ def shortest_job_next():
     for p in range(count):
         proc.append({"index": p, "burst": data[p]['burst'],
                     "arrival": data[p]['arrival'], "start": 0, "progress": 0})
+
     #print(proc)
+
 
     for t in range(time_max):
         if t == 0:
@@ -317,7 +318,9 @@ def shortest_job_next():
             # copy previous state of the queue
             proc_queue.append(proc_queue[t-1][:])
 
-        # add indices of arriving processes to the end pf the queue
+
+        # add indices of arriving processes to the end of the queue
+
         for a in range(len(proc)):
             if proc[a]['arrival'] == t:
                 proc_queue[t].append(a)
@@ -335,6 +338,7 @@ def shortest_job_next():
             # choose process with shortest burst time
             short = 0
 
+
             for i in range(len(proc_queue[t])):
                 if proc[proc_queue[t][i]]['burst'] < proc[proc_queue[t][short]]['burst']:
                     short = i
@@ -346,7 +350,6 @@ def shortest_job_next():
             # process in progress
             executing = proc_queue[t][0]
 
- 
 
     for x in range(len(proc)):
         proc[x]['progress'] = 0     # reset progress values
@@ -355,7 +358,7 @@ def shortest_job_next():
     # compute x values for gantt chart
     x_values = compute_x_values(proc)
 
-   
+
 
     # for each process, add x-values and yrange
     for x in range(count):
