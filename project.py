@@ -37,9 +37,11 @@ y_ranges = [(0, 4), (4, 4), (8, 4), (12, 4), (16, 4), (20, 4), (24, 4)]
 colors = ['tab:blue', 'tab:green', 'tab:orange',
           'tab:red', 'tab:purple', 'tab:cyan', 'tab:pink']
 
+# displayed text
+message = "Instructions:\n\n 1. Select an algorithm\n 2. Enter process info\n 3. Press RUN"
 
 # Plotting the graph inside a Figure
-fig = Figure(figsize=(7.85, 2), dpi=100)
+fig = Figure(figsize=(8.5, 2), dpi=100)
 fig.patch.set_facecolor('xkcd:grey')
 axes = fig.add_subplot(111)
 
@@ -52,20 +54,6 @@ axes.set_ylim(0, 32)
 axes.set_yticks(y_points)
 axes.set_yticklabels(y_labels)
 
-"""
-# values for the animation
-# xrange - (x-position of rectancle, width of rectangle)
-# yrange - (y-position of rectancle, height of rectangle)
-algo_values = [
-    {"xranges": [(1, 1), (4, 0), (6, 2), (11, 5)], "yrange": (0, 4)},
-    {"xranges": [(0, 5), (5, 0), (5, 0), (5, 0)], "yrange": (4, 4)},
-    {"xranges": [(5, 2), (7, 2), (9, 2), (9, 0)], "yrange": (8, 4)},
-    {"xranges": [(6, 4), (10, 0), (10, 0), (10, 2)], "yrange": (12, 4)},
-    {"xranges": [(11, 4), (20, 2), (15, 6), (23, 5)], "yrange": (16, 4)},
-    {"xranges": [(3, 1), (6, 2), (18, 10), (30, 1)], "yrange": (20, 4)},
-    {"xranges": [(1, 4), (7, 15), (23, 2), (30, 10)], "yrange": (24, 4)}
-]
-"""
 
 ######################################################
 # Code for the functions is below
@@ -86,7 +74,6 @@ def add():
 
                 if(selected_algo == algos[0]):
                     # add data for shortest job next
-                    fin_time = int(ent_arrival.get()) + int(ent_burst.get())
                     data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
                                 "burst": int(ent_burst.get())})
 
@@ -106,11 +93,13 @@ def add():
                 ent_arrival.delete(0, tk.END)
                 ent_burst.delete(0, tk.END)
                 ent_priority.delete(0, tk.END)
+# END OF add
 
 
 def remove():
     global count
     # remove selected process from table and from stored data
+    global count
 
     selected = table.focus()
     # prevent trying to remove when nothing is slected in table
@@ -118,18 +107,23 @@ def remove():
         # remove value from data list
         del data[int(selected)]
         table.delete(selected)
-        count -=1
+
+        count = count - 1
 
 def run():
     if(selected_algo == algos[0]):
         total_time()
         shortest_job_next()
+
+# END OF run
+
     if(selected_algo == algos[1]):
         total_time()
         fcfs()
     if (selected_algo =="P"):
         total_time()
         prioritySchedule()
+
 
     elif(selected_algo == "RR"):
       total_time()
@@ -152,7 +146,6 @@ def animate(y_points, y_labels, animation):
         for p in range(count):
         
             # for each process
-            # TO DO remove finished process if fin value is eqal to i
 
             # values for the animation
             # xrange - (x-position of rectancle, width of rectangle)
@@ -174,6 +167,7 @@ def animate(y_points, y_labels, animation):
         plt.pause(1.0)  # pause for one second
         canvas.draw()
         canvas.flush_events()
+# END OF animate
 
 
 def forget(widget):
@@ -185,6 +179,9 @@ def select_SJN_algo():
     global selected_algo
   #change to algo[]
     selected_algo = algos[0]
+
+   
+
     forget(ent_priority)
     forget(ent_time)
     forget(lbl_priority)
@@ -227,6 +224,7 @@ def select_RR_algo():
 def select_priority_algo():
     global selected_algo
 
+
     #change to algo[]
     selected_algo = algos[2]
     ent_priority.grid(row=1, column=3)
@@ -266,6 +264,13 @@ def advance_time():
     global time
 
     time += 1
+
+    minutes = str(time // 60).zfill(2)
+    seconds = str(time % 60).zfill(2)
+    lbl_clock.configure(text=minutes + " : " + seconds)
+
+# END OF advance_time
+
     if time / 60 >= 1:
         minute = str(round(time/60))
         seconds = time % 60
@@ -279,8 +284,8 @@ def advance_time():
 
 
 
+
 def total_time():
-    # accumulates the duration times for all processes
     global time_max
 
     # accumulate the duration times for all processes
@@ -294,23 +299,10 @@ def total_time():
         ends.append(data[p]['burst'] + data[p]['arrival'])
     max_end = max(ends)
 
-
-    # find earliest start time
-    starts = []
-    for p in range(len(data)):
-        starts.append(data[p]['arrival'])
-    min_start = min(starts)
-
-    t += min_start
-    max_end += min_start
-
     if t > max_end:
         time_max = t
     else:
         time_max = max_end
-
-
-
 
 
 def update_queue_display(time):
@@ -330,6 +322,7 @@ def update_queue_display(time):
 
         q.insert(parent='', index='end', iid=pos,
                  text='', values=(process_name))
+# END OF update_queue_display
 
 
 def before_algorithm():
@@ -337,12 +330,13 @@ def before_algorithm():
     global y_labels
 
     # update y_values according to number of processes
-    y_points = y_points[:count]
+    #y_points = y_points[:count]
 
     # process names for the y-axis of the chart
-    y_labels = []
+    #y_labels = []
     for p in range(count):
-        y_labels.append(data[p]['name'])
+        y_labels[p] = data[p]['name']
+# END OF before_algorithm
 
 
 def compute_x_values(proc):
@@ -385,6 +379,9 @@ def compute_x_values(proc):
                 x_values[p].append((proc[p]['start'], proc[p]['progress']))
 
     return x_values
+
+# END OF compute_x_values
+
 def roundrobin():
     global y_points
     global proc_queue
@@ -748,12 +745,70 @@ def prioritySchedule():
         animation.append({"xranges": x_values[x], "yrange": y_ranges[x]})
 
     animate(y_points, y_labels, animation)
+# END OF shortest_job_next
+
+
+def reset():
+    global count
+    global time
+    global time_max
+    global selected_algo
+    global data
+    global proc_queue
+
+    global axes
+    global y_points
+    global y_labels
+    global y_ranges
+    #global x_ticks
+
+    count = 0
+    time = 0
+    time_max = 0
+    selected_algo = -1
+    data = []
+    proc_queue = []
+
+    y_points = [2, 6, 10, 14, 18, 22, 26]
+    y_labels = ['', '', '', '', '', '', '']
+    y_ranges = [(0, 4), (4, 4), (8, 4), (12, 4), (16, 4), (20, 4), (24, 4)]
+
+    for i in table.get_children():
+        table.delete(i)
+
+    for i in q.get_children():
+        q.delete(i)
+
+    lbl_message_text.configure(text=message)
+    lbl_clock.configure(text="00 : 00")
+
+    axes.cla()
+    axes.grid(True)
+    axes.set_xlabel("Seconds")
+    axes.set_title("Process Execution Timeline")
+    axes.tick_params(left=False)
+    x_ticks = np.arange(0, 61, 5)
+    axes.set_xticks(x_ticks)
+    axes.set_xlim(0, 60)
+    axes.set_ylim(0, 32)
+    axes.set_yticks(y_points)
+    axes.set_yticklabels(y_labels)
+    canvas.draw()
+    canvas.flush_events()
+
+    btn_SJN.config(relief="raised")
+    btn_FCFS.config(relief="raised")
+    btn_P.config(relief="raised")
+    btn_RR.config(relief="raised")
+
+    window.update()
+# END OF reset
 
 ######################################################
 # Code for the gui is below
 ######################################################
 window = tk.Tk()
-window.geometry('800x670')
+window.geometry('870x670')
 window['bg'] = '#000000'
 
 frm_banner = tk.Frame(master=window, height=100, bg="black")
@@ -764,13 +819,11 @@ lbl_title = tk.Label(
     background="black",
     height=3,
     width=100
-
-
 )
 lbl_title.grid(row=0, column=0)
 
-frm_banner.grid(row=0, column=0, padx=30, pady=10,
-                columnspan=2, sticky=tk.W+tk.E)
+frm_banner.grid(row=0, column=0, padx=75, pady=10,
+                columnspan=3, sticky=tk.W+tk.E)
 
 
 # frame for the algorithm choice buttons
@@ -779,7 +832,7 @@ frm_algos = tk.Frame(master=window, height=100, bg="black")
 btn_SJN = tk.Button(
     master=frm_algos,
     text="Shortest Job Next",
-    width=25,
+    width=28,
     height=2,
     bg="black",
     fg="white",
@@ -790,7 +843,7 @@ btn_SJN.grid(row=0, column=1)
 btn_FCFS = tk.Button(
     master=frm_algos,
     text="First Come, First Serve",
-    width=25,
+    width=28,
     height=2,
     bg="black",
     fg="white",
@@ -801,32 +854,33 @@ btn_FCFS.grid(row=0, column=2)
 btn_P = tk.Button(
     master=frm_algos,
     text="Priority",
-    width=25,
+    width=28,
     height=2,
     bg="black",
+
     fg="white",
     command = select_priority_algo
+
 )
 btn_P.grid(row=0, column=3)
 
 btn_RR = tk.Button(
     master=frm_algos,
     text="Round Robin",
-    width=25,
+    width=28,
     height=2,
     bg="black",
-    fg="white",
-    command=select_RR_algo
+    fg="white"
 )
 btn_RR.grid(row=0, column=4)
 
-frm_algos.grid(row=1, column=0, padx=30, pady=10,
-               columnspan=2, sticky=tk.W+tk.E)
+frm_algos.grid(row=1, column=0, padx=24, pady=10,
+               columnspan=3, sticky=tk.W+tk.E)
 
 
 # table  for inputs
 table = ttk.Treeview(window, height=7)
-table.grid(row=2, column=0, pady=10)
+table.grid(row=2, column=0, pady=10, padx=30)
 
 table['columns'] = ('name', 'arrival', 'burst', 'priority')
 
@@ -922,23 +976,35 @@ q.heading("process", text="Process Queue", anchor='center')
 
 
 # system clock
-lbl_clock_title = tk.Label(
-    text="SYSTEM CLOCK",
-    foreground="black",
-    background="yellow",
-    height=2,
-    width=20
-)
-lbl_clock_title.grid(row=3, column=1, pady=10)
-
 lbl_clock = tk.Label(
-    text="time",
+    text="00 : 00",
     foreground="yellow",
     background="black",
     height=2,
     width=20
 )
 lbl_clock.grid(row=4, column=1, pady=10)
+lbl_clock.config(font=('Helvetica bold', 15))
+
+# message area
+frm_message = tk.Frame(master=window, bg="black")
+
+frm_message.grid(row=2, column=2, pady=10, sticky=tk.W+tk.N)
+
+lbl_message_text = tk.Message(
+    master=frm_message,
+    text=message,
+    foreground="yellow",
+    background='black'
+)
+lbl_message_text.grid(row=0, column=0)
+
+# reset button
+btn_reset = ttk.Button(
+    text="RESET",
+    command=reset
+)
+btn_reset.grid(row=3, column=2)
 
 
 # frame for timeline for process execution
@@ -949,14 +1015,13 @@ axes.grid()
 canvas = FigureCanvasTkAgg(fig, frm_timeline)
 canvas.get_tk_widget().grid(row=0, column=0)
 
-frm_timeline.grid(row=5, column=0, columnspan=2,
-                  sticky=tk.W+tk.E, pady=10, padx=7)
+frm_timeline.grid(row=5, column=0, columnspan=3,
+                  sticky=tk.W+tk.E, pady=10, padx=9)
 
 ####### STYLE #######
 style = ttk.Style()
 style.theme_use("clam")
 style.configure('TButton', background='yellow', foreground='black',
-                width=10, height=1, borderwidth=1, focusthickness=3, focuscolor='none')
-
+                width=10, height=1, borderwidth=2, focusthickness=3, focuscolor='none')
 
 window.mainloop()
