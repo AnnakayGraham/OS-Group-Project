@@ -591,6 +591,9 @@ def shortest_job_next():
 
     animate(y_points, y_labels, animation)
 
+def arrivalSort(y):
+    return y['arrival']    
+
 def fcfs():
 
     global y_points
@@ -602,10 +605,13 @@ def fcfs():
     y_points = y_points[:count]
 
     # process names for the y-axis of the chart
+    data.sort(key=arrivalSort)
     y_labels = []
     for p in range(count):
         y_labels.append(data[p]['name'])
 
+
+    #print(data)
     animation = []
     x_values = []
     proc = []
