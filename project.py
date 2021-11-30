@@ -95,7 +95,9 @@ def add():
                     fin_time = int(ent_arrival.get()) + int(ent_burst.get())
                     data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
                                 "burst": int(ent_burst.get())})
-                
+                elif (selected_algo == "P"):
+                    data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
+                                "burst": int(ent_burst.get()),'priority':int(ent_priority.get())})
                     # print(data)
 
                 ent_name.delete(0, tk.END)
@@ -122,7 +124,10 @@ def run():
     if(selected_algo == algos[1]):
         total_time()
         fcfs()
-
+    if (selected_algo =="P"):
+        total_time()
+        prioritySchedule()
+   
 
 def animate(y_points, y_labels, animation):
     global axes
@@ -176,6 +181,18 @@ def select_FCFS_algo():
     ent_priority['bg'] = "black"    
 
  
+def select_priority_algo():
+    global selected_algo
+
+    #change to algo[]
+    selected_algo = "P"
+    ent_priority.grid(row=1, column=3)
+    lbl_priority.grid(row=0, column=3)
+    displaycolumns=[]
+    for col in table["columns"]:
+      displaycolumns.append(col)
+    table["displaycolumn"]=displaycolumns
+
         
 
 def advance_time():
@@ -449,6 +466,77 @@ def fcfs():
 
     animate(y_points, y_labels, animation)
 
+def prioritySchedule():
+    proc = []
+    animation = []
+    global y_points
+    x_values = []
+    index={}
+    executing = -1
+    before_algorithm()
+
+    #the process's burst time, arrival time, start time, progress and priority
+    for i in range(count):
+        proc.append({"index":i, "burst":data[i]['burst'], "arrival":data[i]['arrival'], "start":0, "progress":0, "priority":data[i] ["priority"]})
+    
+
+    for i in range(0, len(proc)-1):
+        for j in range(0, len(proc)-i-1):
+            if proc[j]['priority'] > proc[j+1]['priority']:
+                proc[j], proc[j+1] = proc[j+1], proc[j]
+
+    for t in range(time_max):
+        if t == 0:
+            proc_queue.append([])
+        else:
+            # copy previous state of the queue
+            proc_queue.append(proc_queue[t-1][:])
+
+        # add indices of arriving processes to the end of the queue
+        for a in range(len(proc)):
+            if proc[a]['arrival'] == t:
+                proc_queue[t].append(a)
+
+        # if process is currently being executed
+        if executing != -1 and len(proc_queue[t]) > 0:
+            proc[executing]['progress'] += 1
+
+            # is process finihsed
+            if proc[executing]['progress'] >= proc[executing]['burst']:
+                proc_queue[t].pop(0)  # remove from top of queue
+                executing = -1
+
+        if executing == -1 and len(proc_queue[t]) > 0:
+            # choose process with highest priority 
+            priority = 0
+
+            for i in range(len(proc_queue[t])):
+                if proc[proc_queue[t][i]]['priority'] < proc[proc_queue[t][priority ]]['priority']:
+                    priority  = i
+            # move the shortest process to the top of the queue
+            s = proc_queue[t].pop(priority )
+            proc_queue[t].insert(0, s)
+
+            # process in progress
+            executing = proc_queue[t][0]
+
+    print(proc_queue)
+
+    for x in range(len(proc)):
+        proc[x]['progress'] = 0     # reset progress values
+        proc[x]['start'] = 0        # reset start values
+
+    # compute x values for gantt chart
+    x_values = compute_x_values(proc)
+
+    print(x_values)
+
+    # for each process, add x-values and yrange
+    for x in range(count):
+        animation.append({"xranges": x_values[x], "yrange": y_ranges[x]})
+
+    animate(y_points, y_labels, animation)
+
 ######################################################
 # Code for the gui is below
 ######################################################
@@ -504,7 +592,8 @@ btn_P = tk.Button(
     width=25,
     height=2,
     bg="black",
-    fg="white"
+    fg="white",
+    command = select_priority_algo
 )
 btn_P.grid(row=0, column=3)
 
