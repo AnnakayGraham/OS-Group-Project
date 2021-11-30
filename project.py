@@ -122,7 +122,7 @@ def animate(y_points, y_labels, animation):
     for i in range(time_max):
         # for each time unit
         advance_time()
-        # TO ADD update_queue_display(i)
+        update_queue_display(i)
 
         for p in range(count):
             # for each process
@@ -165,15 +165,35 @@ def total_time():
     # accumulates the duration times for all processes
     global time_max
 
+    # accumulate the duration times for all processes
     t = 0
     for p in range(len(data)):
         t += data[p]['burst']
-    time_max = t
+
+    # find latest end time
+    ends = []
+    for p in range(len(data)):
+        ends.append(data[p]['burst'] + data[p]['arrival'])
+    max_end = max(ends)
+
+    # find earliest start time
+    starts = []
+    for p in range(len(data)):
+        starts.append(data[p]['arrival'])
+    min_start = min(starts)
+
+    t += min_start
+    max_end += min_start
+
+    if t > max_end:
+        time_max = t
+    else:
+        time_max = max_end
+
+    print("max time is " + str(time_max))
 
 
 def update_queue_display(time):
-    global proc_queue
-
     # clear the queue display table
     for i in q.get_children():
         q.delete(i)
@@ -184,12 +204,13 @@ def update_queue_display(time):
         process_index = proc_queue[time][pos]
         process_name = data[process_index]['name']
 
-        q.insert(parent='', index='end', iid=q_index,
+        q.insert(parent='', index='end', iid=pos,
                  text='', values=(process_name))
 
 
-def shortest_job_next():
+def before_algorithm():
     global y_points
+    global y_labels
 
     # update y_values according to number of processes
     y_points = y_points[:count]
@@ -199,61 +220,109 @@ def shortest_job_next():
     for p in range(count):
         y_labels.append(data[p]['name'])
 
-    animation = []
+
+def compute_x_values(proc):
+    global proc_queue
     x_values = []
-    proc = []
 
-    # store process indices and burst times
-    for p in range(count):
-        proc.append([p, data[p]['burst']])
-
-    # sorting the processes according to burst times
-    for i in range(0, len(proc)-1):
-        for j in range(0, len(proc)-i-1):
-            if proc[j][1] > proc[j+1][1]:
-                proc[j], proc[j+1] = proc[j+1], proc[j]
-
-    # calculate new start and end times
-    new_times = []
-    start = 0
-    for r in range(len(proc)):
-        # [process index, start, end]
-        if r == 0:
-            new_times.append([proc[r][0], 0, proc[r][1]])
-            start = proc[r][1]    # add first processes end time
-        else:
-            end = start + proc[r][1]
-            new_times.append([proc[r][0], start, end])
-            start = end
-
-    print(new_times)
-
-    # compute list of x values for the animation
     for x in range(len(proc)):
-        # for each process
-        p = []
-        steps = 1
-        for t in range(1, time_max + 1):
-            # for each time unit
-            if t <= new_times[x][1]:
-                # process has not arrived
-                p.append((0, 0))
+        x_values.append([])
 
-            elif t == new_times[x][1]:
-                # process has arrived
-                p.append((t, steps))
-                steps += 1
+    # computing x_values based on state of queue at different times
+    for q in range(len(proc_queue)):
+        for p in range(len(proc)):
 
-            elif t > new_times[x][1]:
-                if t <= new_times[x][2]:
-                    # process in progress
-                    p.append((new_times[x][1], steps))
-                    steps += 1
-                elif t > new_times[x][2]:
-                    # process is finished
-                    p.append((new_times[x][1], new_times[x][2]))
+            # if the queue is not empty at this time
+            if len(proc_queue[q]) > 0:
+                # find process at top of the queue
+                if proc_queue[q][0] == proc[p]['index']:
+                    if proc[p]['progress'] == 0:
+                        # if process is just starting
+                        proc[p]['progress'] += 1
+                        # store start as current time in the queue
+                        proc[p]['start'] = q
+                        x_values[p].append(
+                            (proc[p]['start'], proc[p]['progress']))
 
-        x_values.append(p)
+                    elif 0 < proc[p]['progress'] < proc[p]['burst']:
+                        # a process that has started and is not finished will increse in progress
+                        proc[p]['progress'] += 1
+                        x_values[p].append(
+                            (proc[p]['start'], proc[p]['progress']))
+                else:
+                    # process that is not executing has its x_values repeated
+                    x_values[p].append(
+                        (proc[p]['start'], proc[p]['progress']))
+
+            # if the queue is empty at this time
+            else:
+                # if the queue is empty at this time no process is executed
+                # process that is not executing has its x_values repeated
+                x_values[p].append((proc[p]['start'], proc[p]['progress']))
+
+    return x_values
+
+
+def shortest_job_next():
+    global proc_queue
+
+    # prepare the gantt chart axis
+    before_algorithm()
+
+    animation = []
+    proc = []
+    executing = -1
+
+    # store process indices and burst times and arrival times
+    for p in range(count):
+        proc.append({"index": p, "burst": data[p]['burst'],
+                    "arrival": data[p]['arrival'], "start": 0, "progress": 0})
+    print(proc)
+
+    for t in range(time_max):
+        if t == 0:
+            proc_queue.append([])
+        else:
+            # copy previous state of the queue
+            proc_queue.append(proc_queue[t-1][:])
+
+        # add indices of arriving processes to the end of the queue
+        for a in range(len(proc)):
+            if proc[a]['arrival'] == t:
+                proc_queue[t].append(a)
+
+        # if process is currently being executed
+        if executing != -1 and len(proc_queue[t]) > 0:
+            proc[executing]['progress'] += 1
+
+            # is process finihsed
+            if proc[executing]['progress'] >= proc[executing]['burst']:
+                proc_queue[t].pop(0)  # remove from top of queue
+                executing = -1
+
+        if executing == -1 and len(proc_queue[t]) > 0:
+            # choose process with shortest burst time
+            short = 0
+
+            for i in range(len(proc_queue[t])):
+                if proc[proc_queue[t][i]]['burst'] < proc[proc_queue[t][short]]['burst']:
+                    short = i
+
+            # move the shortest process to the top of the queue
+            s = proc_queue[t].pop(short)
+            proc_queue[t].insert(0, s)
+
+            # process in progress
+            executing = proc_queue[t][0]
+
+    print(proc_queue)
+
+    for x in range(len(proc)):
+        proc[x]['progress'] = 0     # reset progress values
+        proc[x]['start'] = 0        # reset start values
+
+    # compute x values for gantt chart
+    x_values = compute_x_values(proc)
 
     print(x_values)
 
@@ -318,8 +387,7 @@ btn_P = tk.Button(
     width=25,
     height=2,
     bg="black",
-    fg="white",
-    command=select_priority_algo
+    fg="white"
 )
 btn_P.grid(row=0, column=3)
 
@@ -329,8 +397,7 @@ btn_RR = tk.Button(
     width=25,
     height=2,
     bg="black",
-    fg="white",
-    command=select_RR_algo
+    fg="white"
 )
 btn_RR.grid(row=0, column=4)
 
@@ -391,37 +458,25 @@ ent_priority.grid(row=1, column=3)
 
 
 # frame for control buttons
-frm_btns = tk.Frame()
+frm_btns = tk.Frame(master=window)
 
-btn_add = tk.Button(
+btn_add = ttk.Button(
     master=frm_btns,
     text="ADD",
-    width=10,
-    height=1,
-    bg="yellow",
-    fg="black",
     command=add
 )
 btn_add.grid(row=0, column=0, padx=5, pady=5)
 
-btn_remove = tk.Button(
+btn_remove = ttk.Button(
     master=frm_btns,
     text="REMOVE",
-    width=10,
-    height=1,
-    bg="yellow",
-    fg="black",
     command=remove
 )
 btn_remove.grid(row=0, column=1, padx=5, pady=5)
 
-btn_run = tk.Button(
+btn_run = ttk.Button(
     master=frm_btns,
     text="RUN",
-    width=10,
-    height=1,
-    bg="yellow",
-    fg="black",
     command=run
 )
 btn_run.grid(row=0, column=2, padx=5, pady=5)
@@ -472,6 +527,12 @@ canvas.get_tk_widget().grid(row=0, column=0)
 
 frm_timeline.grid(row=5, column=0, columnspan=2,
                   sticky=tk.W+tk.E, pady=10, padx=7)
+
+####### STYLE #######
+style = ttk.Style()
+style.theme_use("clam")
+style.configure('TButton', background='yellow', foreground='black',
+                width=10, height=1, borderwidth=1, focusthickness=3, focuscolor='none')
 
 
 window.mainloop()
