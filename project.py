@@ -89,6 +89,13 @@ def add():
                     fin_time = int(ent_arrival.get()) + int(ent_burst.get())
                     data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
                                 "burst": int(ent_burst.get())})
+
+                elif(selected_algo == algos[1]):
+                    # add data for FCFS
+                    fin_time = int(ent_arrival.get()) + int(ent_burst.get())
+                    data.append({"name": ent_name.get(), "arrival": int(ent_arrival.get()),
+                                "burst": int(ent_burst.get())})
+                
                     # print(data)
 
                 ent_name.delete(0, tk.END)
@@ -112,6 +119,9 @@ def run():
     if(selected_algo == algos[0]):
         total_time()
         shortest_job_next()
+    if(selected_algo == algos[1]):
+        total_time()
+        fcfs()
 
 
 def animate(y_points, y_labels, animation):
@@ -119,21 +129,27 @@ def animate(y_points, y_labels, animation):
 
     ani_x_values = [[], [], [], [], [], [], []]
 
+    #print(animation)
+
     for i in range(time_max):
         # for each time unit
         advance_time()
         update_queue_display(i)
 
         for p in range(count):
+        
             # for each process
             # TO DO remove finished process if fin value is eqal to i
 
             # values for the animation
             # xrange - (x-position of rectancle, width of rectangle)
             # yrange - (y-position of rectancle, height of rectangle)
+
+            #print(animation[p]["xranges"],i,animation[p]["xranges"][i])
             ani_x_values[p].append(tuple(animation[p]["xranges"][i]))
             axes.broken_barh(xranges=ani_x_values[p],
                              yrange=y_ranges[p], facecolors=colors[p])
+        
 
         x_ticks = np.arange(0, 61, 5)  # values for the x axis
         axes.set_xticks(x_ticks)
@@ -153,6 +169,14 @@ def select_SJN_algo():
     selected_algo = algos[0]
     ent_priority['bg'] = "black"
 
+def select_FCFS_algo():
+    global selected_algo
+
+    selected_algo = algos[1]
+    ent_priority['bg'] = "black"    
+
+ 
+        
 
 def advance_time():
     global time
@@ -176,6 +200,7 @@ def total_time():
         ends.append(data[p]['burst'] + data[p]['arrival'])
     max_end = max(ends)
 
+
     # find earliest start time
     starts = []
     for p in range(len(data)):
@@ -190,18 +215,23 @@ def total_time():
     else:
         time_max = max_end
 
-    print("max time is " + str(time_max))
+
+
 
 
 def update_queue_display(time):
     # clear the queue display table
     for i in q.get_children():
         q.delete(i)
-
+    #print(data,time)
+    #print(proc_queue[time])
     # NOTE - proc_queue has the form [ [0,3], [3], ... ]
     #   with one inner list for each time, having index number and processes to be displayed
     for pos in range(len(proc_queue[time])):
+
         process_index = proc_queue[time][pos]
+        #print(data[process_index]['name'])
+
         process_name = data[process_index]['name']
 
         q.insert(parent='', index='end', iid=pos,
@@ -277,7 +307,9 @@ def shortest_job_next():
     for p in range(count):
         proc.append({"index": p, "burst": data[p]['burst'],
                     "arrival": data[p]['arrival'], "start": 0, "progress": 0})
-    print(proc)
+
+    #print(proc)
+
 
     for t in range(time_max):
         if t == 0:
@@ -286,7 +318,9 @@ def shortest_job_next():
             # copy previous state of the queue
             proc_queue.append(proc_queue[t-1][:])
 
+
         # add indices of arriving processes to the end of the queue
+
         for a in range(len(proc)):
             if proc[a]['arrival'] == t:
                 proc_queue[t].append(a)
@@ -304,6 +338,7 @@ def shortest_job_next():
             # choose process with shortest burst time
             short = 0
 
+
             for i in range(len(proc_queue[t])):
                 if proc[proc_queue[t][i]]['burst'] < proc[proc_queue[t][short]]['burst']:
                     short = i
@@ -315,7 +350,6 @@ def shortest_job_next():
             # process in progress
             executing = proc_queue[t][0]
 
-    print(proc_queue)
 
     for x in range(len(proc)):
         proc[x]['progress'] = 0     # reset progress values
@@ -324,14 +358,96 @@ def shortest_job_next():
     # compute x values for gantt chart
     x_values = compute_x_values(proc)
 
-    print(x_values)
+
 
     # for each process, add x-values and yrange
     for x in range(count):
         animation.append({"xranges": x_values[x], "yrange": y_ranges[x]})
+    
+    #print (animation)
 
     animate(y_points, y_labels, animation)
 
+def fcfs():
+
+    global y_points
+
+    # prepare the gantt chart axis
+    before_algorithm()    
+
+    # update y_values according to number of processes
+    y_points = y_points[:count]
+
+    # process names for the y-axis of the chart
+    y_labels = []
+    for p in range(count):
+        y_labels.append(data[p]['name'])
+
+    animation = []
+    x_values = []
+    proc = []
+
+    # store process indices and burst times
+    for p in range(count):
+        proc.append([p, data[p]['burst']])
+
+    d = dict()
+    
+    for i in range(count):
+        key = "P"+str(i+1)
+        a = data[i]['arrival']#arrival time
+        b = data[i]['burst'] #burst time
+        l = []
+        l.append(a)
+        l.append(b)
+        d[key] = l
+    
+    d = sorted(d.items(), key=lambda item: item[1][0])
+    #print (d)
+    
+    ET = []
+    for i in range(len(d)):
+        # first process
+        if(i==0):
+            ET.append(d[i][1][1]+d[i][1][0])
+    
+    
+        # get prevET + newBT
+        else:
+            diff=0
+            if (d[i][1][0] >= ET[i-1]):
+
+                diff = d[i][1][0]-ET[i-1]
+            ET.append(ET[i-1] + d[i][1][1]+diff)
+
+
+    gap = {}
+    for y in range(count):
+
+        proc_start = ET[y]-data[y]['burst']
+
+        f=0
+        gap[y] = []
+        while f < proc_start:
+        
+            gap[y].append((0,0))
+            if (y==0):
+
+                proc_queue.append([])
+            f+=1 
+
+        for u in range(data[y]['burst']):
+            proc_queue.append([y,y])
+
+        for g in range(time_max):
+            gap[y].append((proc_start,u+1))
+
+    for x in range(count):
+        animation.append({"xranges": gap[x], "yrange": y_ranges[x]})
+    #print (animation)
+     #   print([d[i][1][0],ET[x]])
+
+    animate(y_points, y_labels, animation)
 
 ######################################################
 # Code for the gui is below
@@ -377,7 +493,8 @@ btn_FCFS = tk.Button(
     width=25,
     height=2,
     bg="black",
-    fg="white"
+    fg="white",
+    command = select_FCFS_algo
 )
 btn_FCFS.grid(row=0, column=2)
 
